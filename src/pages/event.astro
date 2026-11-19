@@ -1,0 +1,87 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import Icon from '../components/Icon.astro';
+import EventCard from '../components/EventCard.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { upcomingEvents, pastEvents } from '../data/events';
+import { site } from '../data/site';
+---
+
+<Base
+  title="Event"
+  description="Webinar, seminar, talkshow dan meetup Tradix Community bersama partner seperti BingX, TRIV dan Indonesia Blockchain Week."
+>
+  <PageHero
+    eyebrow="Event"
+    title="Webinar online dan meetup offline bersama trader lain"
+    lead="Tradix sudah menggelar seminar, talkshow dan meetup di Bogor dan Bekasi, plus webinar rutin lewat Google Meet."
+    crumbs={[{ label: 'Event', href: '/event/' }]}
+  />
+
+  <section class="section section--tight">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Mendatang</span>
+        <h2>Event berikutnya</h2>
+      </div>
+      {
+        upcomingEvents.length > 0 ? (
+          <div class="grid grid-3">
+            {upcomingEvents.map((e) => (
+              <EventCard event={e} />
+            ))}
+          </div>
+        ) : (
+          <div class="card empty">
+            <span class="icon-tile">
+              <Icon name="calendar" />
+            </span>
+            <div>
+              <h3>Jadwal berikutnya sedang disiapkan</h3>
+              <p>Event baru selalu diumumkan lebih dulu di WhatsApp Community dan Instagram Tradix.</p>
+            </div>
+            <div class="btn-row">
+              <a class="btn btn--primary" href={site.whatsapp} target="_blank" rel="noopener">
+                <Icon name="whatsapp" /> Dapatkan info event
+              </a>
+              <a class="btn btn--ghost" href={site.instagram} target="_blank" rel="noopener">
+                <Icon name="instagram" /> {site.instagramHandle}
+              </a>
+            </div>
+          </div>
+        )
+      }
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Arsip</span>
+        <h2>Event yang sudah berlangsung</h2>
+      </div>
+      <div class="grid grid-3">
+        {pastEvents.map((e) => <EventCard event={e} />)}
+      </div>
+    </div>
+  </section>
+
+  <CtaBand title="Jangan lewatkan event berikutnya" text="Pendaftaran event dan link webinar dibagikan pertama kali di grup WhatsApp Tradix." />
+</Base>
+
+<style>
+  .empty {
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 24px;
+  }
+  .empty h3 {
+    margin-bottom: 4px;
+  }
+  @media (max-width: 860px) {
+    .empty {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

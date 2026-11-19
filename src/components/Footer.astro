@@ -1,0 +1,174 @@
+---
+import Icon from './Icon.astro';
+import { nav, site } from '../data/site';
+const tentang = nav.find((n) => n.children)!;
+const others = nav.filter((n) => !n.children);
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="top">
+      <div class="about">
+        <a class="brand" href="/">
+          <img src="/images/brand/logo-256.png" alt="" width="48" height="48" loading="lazy" />
+          <span>Tradix Community</span>
+        </a>
+        <p class="muted">{site.tagline} Komunitas edukasi trading crypto dan forex, gratis untuk semua.</p>
+        <div class="social">
+          <a href={site.whatsapp} target="_blank" rel="noopener" aria-label="WhatsApp Community Tradix">
+            <Icon name="whatsapp" />
+          </a>
+          <a href={site.instagram} target="_blank" rel="noopener" aria-label="Instagram Tradix Community">
+            <Icon name="instagram" />
+          </a>
+        </div>
+      </div>
+      <nav class="cols" aria-label="Navigasi footer">
+        <div>
+          <h2>Tentang</h2>
+          <ul>
+            {tentang.children!.map((c) => <li><a href={c.href}>{c.label}</a></li>)}
+          </ul>
+        </div>
+        <div>
+          <h2>Belajar</h2>
+          <ul>
+            {others.map((c) => <li><a href={c.href}>{c.label}</a></li>)}
+          </ul>
+        </div>
+        <div>
+          <h2>Ikuti</h2>
+          <ul>
+            <li><a href={site.whatsapp} target="_blank" rel="noopener">WhatsApp Community</a></li>
+            <li><a href={site.instagram} target="_blank" rel="noopener">{site.instagramHandle}</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+    <div class="bottom">
+      <p>
+        <strong>Disclaimer:</strong> Semua konten Tradix adalah materi edukasi, bukan saran finansial. Trading crypto dan
+        forex, terutama dengan leverage, berisiko tinggi dan bisa menghabiskan modal. Lakukan riset sendiri.
+      </p>
+      <p class="muted">© {year} Tradix Community</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: #05080f;
+    border-top: 1px solid var(--line);
+    padding-block: 64px 32px;
+    font-size: 0.95rem;
+  }
+  .top {
+    display: grid;
+    grid-template-columns: 1.2fr 2fr;
+    gap: 48px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--line);
+  }
+  .about {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+    max-width: 36ch;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-decoration: none;
+  }
+  .brand img {
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+  }
+  .social {
+    display: flex;
+    gap: 10px;
+  }
+  .social a {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line-2);
+    color: var(--ink-2);
+    transition:
+      transform 0.18s var(--ease),
+      color 0.18s,
+      border-color 0.18s;
+  }
+  .social a:hover {
+    transform: translateY(-2px);
+    color: var(--ink);
+    border-color: var(--accent-2);
+  }
+  .social :global(svg) {
+    width: 20px;
+    height: 20px;
+  }
+  .cols {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .cols h2 {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .cols ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .cols a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--ink-2);
+    text-decoration: none;
+  }
+  .cols a:hover {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .bottom {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    padding-top: 24px;
+    color: var(--muted);
+    font-size: 0.88rem;
+  }
+  .bottom strong {
+    color: var(--ink-2);
+  }
+  .bottom p:first-child {
+    max-width: 80ch;
+  }
+  @media (max-width: 860px) {
+    .top,
+    .bottom {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 520px) {
+    .cols {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

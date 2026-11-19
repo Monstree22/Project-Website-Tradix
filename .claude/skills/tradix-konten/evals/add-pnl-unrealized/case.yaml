@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: add-pnl-unrealized
+expected_outcome: |
+  A trade is added to src/data/performa.ts read from the screenshot: ENSOUSDT, Long, 50x, +327.38%, status 'unrealized' (the screenshot says 'PnL yang belum terealisasi'), owner a member. Image converted to WebP without cropping. Build succeeds.
+context:
+  scaffold_script: place-files.sh

@@ -1,0 +1,85 @@
+---
+import Icon from './Icon.astro';
+import { site, stats } from '../data/site';
+interface Props {
+  title?: string;
+  text?: string;
+}
+const {
+  title = 'Gabung grup belajar Tradix hari ini',
+  text = 'Masuk ke WhatsApp Community, ikuti roadmap minggu pertama, dan tanya apa saja ke mentor. Gratis, tanpa iuran.',
+} = Astro.props;
+---
+
+<section class="cta section--tight">
+  <div class="wrap">
+    <div class="cta-box">
+      <div class="cta-copy">
+        <h2>{title}</h2>
+        <p class="lead">{text}</p>
+      </div>
+      <div class="cta-side">
+        <p class="count"><span class="mono">{stats[0].value}</span> trader sudah bergabung</p>
+        <div class="btn-row">
+          <a class="btn btn--primary" href={site.whatsapp} target="_blank" rel="noopener">
+            <Icon name="whatsapp" /> Gabung WhatsApp
+          </a>
+          <a class="btn btn--ghost" href={site.instagram} target="_blank" rel="noopener">
+            <Icon name="instagram" /> Ikuti Instagram
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta {
+    padding-block: 0 clamp(56px, 8vw, 104px);
+  }
+  :global(.section--alt) + .cta,
+  :global(.section--paper) + .cta {
+    padding-top: clamp(56px, 8vw, 104px);
+  }
+  .cta-box {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 40px;
+    align-items: end;
+    padding: clamp(32px, 5vw, 64px);
+    border-radius: 28px;
+    background:
+      radial-gradient(80% 120% at 100% 0%, rgb(47 123 255 / 0.45), transparent 60%),
+      linear-gradient(135deg, #0f2350, #0a1428 60%);
+    border: 1px solid #22407a;
+  }
+  .cta-copy {
+    display: grid;
+    gap: 16px;
+  }
+  .cta-copy h2 {
+    max-width: 16ch;
+  }
+  .cta-side {
+    display: grid;
+    gap: 16px;
+    justify-items: start;
+  }
+  .count {
+    color: var(--ink-2);
+  }
+  .count .mono {
+    color: var(--up);
+    font-size: 1.2rem;
+  }
+  @media (max-width: 860px) {
+    .cta-box {
+      grid-template-columns: 1fr;
+    }
+    .cta-side {
+      justify-items: stretch;
+    }
+  }
+</style>

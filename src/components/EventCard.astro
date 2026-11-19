@@ -1,0 +1,118 @@
+---
+import Icon from './Icon.astro';
+import { formatDate, type TradixEvent } from '../data/events';
+interface Props {
+  event: TradixEvent;
+  compact?: boolean;
+}
+const { event, compact = false } = Astro.props;
+---
+
+<article class="event card" id={event.slug}>
+  <div class="frame poster">
+    <img
+      src={event.poster}
+      alt={`Poster ${event.type}: ${event.title}`}
+      width="900"
+      height={event.posterRatio === '1/1' ? 900 : 1125}
+      loading="lazy"
+    />
+  </div>
+  <div class="body">
+    <span class="badge badge--neutral">{event.type}{event.city ? ` · ${event.city}` : ''}</span>
+    <h3>{event.title}</h3>
+    <ul class="facts">
+      {
+        event.date && (
+          <li>
+            <Icon name="calendar" />
+            {formatDate(event.date)}
+            {event.time ? `, ${event.time}` : ''}
+          </li>
+        )
+      }
+      <li><Icon name="pin" />{event.place}</li>
+    </ul>
+    {
+      !compact && event.speakers.length > 0 && (
+        <div class="speakers">
+          <h4>Pembicara</h4>
+          <ul>
+            {event.speakers.map((s) => (
+              <li>
+                <strong>{s.name}</strong> <span>{s.role}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+  </div>
+</article>
+
+<style>
+  .event {
+    padding: 12px;
+    gap: 0;
+  }
+  .poster {
+    aspect-ratio: 4 / 5;
+    background: #0a1222;
+  }
+  /* poster ditampilkan utuh, tidak terpotong */
+  .poster img {
+    object-fit: contain;
+  }
+  .body {
+    display: grid;
+    gap: 12px;
+    padding: 18px 10px 10px;
+    align-content: start;
+  }
+  .body h3 {
+    font-size: 1.15rem;
+  }
+  .facts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 6px;
+    color: var(--ink-2);
+    font-size: 0.93rem;
+  }
+  .facts li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .facts :global(svg) {
+    width: 18px;
+    height: 18px;
+    margin-top: 3px;
+    color: var(--muted);
+    flex: none;
+  }
+  .speakers {
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+  }
+  .speakers h4 {
+    font: 500 0.72rem/1 var(--font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .speakers ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 4px;
+    font-size: 0.92rem;
+  }
+  .speakers span {
+    color: var(--muted);
+  }
+</style>

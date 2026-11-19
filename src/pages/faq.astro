@@ -1,0 +1,67 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import FaqList from '../components/FaqList.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { faqGroups } from '../data/faq';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqGroups.flatMap((g) =>
+    g.items.map((it) => ({ '@type': 'Question', name: it.q, acceptedAnswer: { '@type': 'Answer', text: it.a } })),
+  ),
+};
+---
+
+<Base title="FAQ" description="Pertanyaan yang sering ditanya tentang Tradix Community: biaya, cara gabung, mentor, sinyal dan risiko trading.">
+  <PageHero
+    eyebrow="FAQ"
+    title="Pertanyaan yang sering ditanya"
+    lead="Tidak menemukan jawabannya? Tanyakan langsung di grup WhatsApp, admin dan member siap membantu."
+    crumbs={[{ label: 'FAQ', href: '/faq/' }]}
+  />
+
+  <section class="section">
+    <div class="wrap groups">
+      {
+        faqGroups.map((g) => (
+          <div class="group">
+            <h2>{g.title}</h2>
+            <FaqList items={g.items} />
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <CtaBand />
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+</Base>
+
+<style>
+  .groups {
+    display: grid;
+    gap: 56px;
+  }
+  .group {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  .group h2 {
+    font-size: 1.6rem;
+    position: sticky;
+    top: calc(var(--header-h) + 24px);
+  }
+  @media (max-width: 860px) {
+    .group {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .group h2 {
+      position: static;
+    }
+  }
+</style>

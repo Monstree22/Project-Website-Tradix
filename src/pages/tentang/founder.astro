@@ -1,0 +1,136 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import EventCard from '../../components/EventCard.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { founder } from '../../data/team';
+import { events, formatDate } from '../../data/events';
+import { site } from '../../data/site';
+
+const sessions = events.filter((e) => e.speakers.some((s) => s.name === founder.name));
+---
+
+<Base
+  title={`Founder: ${founder.name}`}
+  description={`${founder.name}, ${founder.role}. Fokus mengajar technical analysis dan market structure di webinar dan meetup Tradix.`}
+>
+  <section class="founder-hero">
+    <div class="wrap fh-grid">
+      <div class="fh-copy" data-enter>
+        <nav class="crumbs" aria-label="Breadcrumb">
+          <a href="/">Beranda</a><span aria-hidden="true">/</span><a href="/tentang/">Tentang</a><span aria-hidden="true">/</span
+          ><a href="/tentang/founder/">Founder</a>
+        </nav>
+        <span class="eyebrow">Founder Tradix Community</span>
+        <h1>{founder.name}</h1>
+        <p class="lead">{founder.bio}</p>
+        <div class="chips">{founder.focus.map((f) => <span class="chip">{f}</span>)}</div>
+        <div class="btn-row">
+          <a class="btn btn--primary" href={site.whatsapp} target="_blank" rel="noopener">
+            <Icon name="whatsapp" /> Belajar bareng di grup
+          </a>
+          <a class="btn btn--ghost" href="#sesi">Lihat sesi {founder.name}</a>
+        </div>
+      </div>
+      <div class="frame fh-photo" data-enter>
+        <img src={founder.photo} alt={`Foto ${founder.name}, founder Tradix Community`} width="480" height="600" />
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="wrap why">
+      <div class="section-head">
+        <span class="eyebrow">Kenapa Tradix didirikan</span>
+        <h2>Agar pemula belajar membaca market, bukan menyalin sinyal</h2>
+      </div>
+      <div class="prose">
+        <p>
+          Tradix dimulai dengan satu ide sederhana: trader pemula butuh tempat bertanya yang jujur. Bukan grup yang menjual
+          sinyal, tapi lingkungan yang mengajarkan <strong>struktur market, manajemen risiko dan disiplin</strong>.
+        </p>
+        <p>
+          Di bawah {founder.name}, Tradix tumbuh menjadi komunitas lebih dari 350 member, menggelar webinar rutin, dan menjadi
+          official partner BingX serta partner squad Indonesia Blockchain Week 2026.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="sesi">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Sesi terbaru</span>
+        <h2>{founder.name} di panggung Tradix</h2>
+        <p class="lead">
+          {sessions.length} sesi terakhir, dari webinar online sampai seminar offline. Terakhir: {formatDate(sessions[0]?.date)}.
+        </p>
+      </div>
+      <div class="grid grid-4 sessions">
+        {sessions.map((e) => <EventCard event={e} compact />)}
+      </div>
+    </div>
+  </section>
+
+  <CtaBand title={`Belajar langsung bersama ${founder.name}`} />
+</Base>
+
+<style>
+  .founder-hero {
+    padding-top: calc(var(--header-h) + clamp(40px, 6vw, 80px));
+    padding-bottom: clamp(56px, 8vw, 104px);
+    background:
+      radial-gradient(50% 70% at 75% 30%, rgb(47 123 255 / 0.2), transparent 70%),
+      var(--bg);
+  }
+  .fh-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: clamp(32px, 6vw, 88px);
+    align-items: center;
+  }
+  .fh-copy {
+    display: grid;
+    gap: 22px;
+    justify-items: start;
+  }
+  .fh-copy h1 {
+    font-size: clamp(3.5rem, 9vw, 7rem);
+    letter-spacing: -0.04em;
+  }
+  .fh-photo {
+    aspect-ratio: 4 / 5;
+    border-radius: 28px;
+    border: 1px solid var(--line-2);
+    box-shadow: 0 40px 80px -40px rgb(47 123 255 / 0.5);
+  }
+  .fh-photo img {
+    object-position: center 20%;
+  }
+  .why {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(32px, 5vw, 72px);
+    align-items: start;
+  }
+  @media (max-width: 1100px) {
+    .sessions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 900px) {
+    .fh-grid,
+    .why {
+      grid-template-columns: 1fr;
+    }
+    .fh-photo {
+      max-width: 440px;
+      order: -1;
+    }
+  }
+  @media (max-width: 640px) {
+    .sessions {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

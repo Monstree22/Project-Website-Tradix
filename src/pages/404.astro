@@ -1,0 +1,13 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+---
+
+<Base title="Halaman tidak ditemukan">
+  <PageHero eyebrow="404" title="Halaman ini tidak ada" lead="Mungkin link-nya sudah berubah. Coba mulai dari beranda atau lihat materi belajar.">
+    <div class="btn-row">
+      <a class="btn btn--primary" href="/">Kembali ke beranda</a>
+      <a class="btn btn--ghost" href="/materi/">Lihat materi</a>
+    </div>
+  </PageHero>
+</Base>

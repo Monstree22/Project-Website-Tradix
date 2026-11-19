@@ -1,0 +1,140 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Icon from '../../components/Icon.astro';
+import PersonCard from '../../components/PersonCard.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { team } from '../../data/team';
+import { site } from '../../data/site';
+
+const mentors = team.filter((p) => p.slug === 'kenzo' || p.group === 'mentor');
+
+const steps = [
+  { title: 'Gabung grup gratis', text: 'Masuk WhatsApp Community Tradix dan perkenalkan diri: pengalaman, market dan target belajarmu.' },
+  { title: 'Ikuti roadmap 8 minggu', text: 'Mulai dari Basic Trading sampai Trading Psychology, satu topik setiap minggu.' },
+  { title: 'Bawa chart ke diskusi', text: 'Kirim setup kamu di grup. Mentor dan member membedahnya: entry, stop loss, risk-to-reward.' },
+  { title: 'Ikut webinar & meetup', text: 'Tanya langsung ke mentor dan tamu partner di sesi online maupun offline.' },
+];
+
+const formats = [
+  { icon: 'mic', title: 'Webinar mentor', text: 'Sesi live dengan materi teknikal, makro dan psikologi, ditutup tanya jawab.' },
+  { icon: 'candles', title: 'Sharing analisa', text: 'Analis Tradix membagikan cara mereka membaca chart, lengkap dengan alasannya.' },
+  { icon: 'search', title: 'Review setup member', text: 'Setup yang kamu kirim dibahas terbuka supaya semua member ikut belajar.' },
+] as const;
+---
+
+<Base
+  title="Mentorship"
+  description="Program mentorship Tradix: roadmap 8 minggu, webinar mentor, sharing analisa dan review setup member. Gratis."
+>
+  <PageHero
+    eyebrow="Tentang · Mentorship"
+    title="Belajar trading dibimbing trader yang aktif di market"
+    lead="Mentorship Tradix menggabungkan roadmap terstruktur dengan diskusi harian, jadi kamu tidak belajar sendirian. Gratis untuk semua member."
+    crumbs={[
+      { label: 'Tentang', href: '/tentang/' },
+      { label: 'Mentorship', href: '/tentang/mentorship/' },
+    ]}
+  >
+    <div class="btn-row">
+      <a class="btn btn--primary" href={site.whatsapp} target="_blank" rel="noopener">
+        <Icon name="whatsapp" /> Mulai mentorship gratis
+      </a>
+      <a class="btn btn--ghost" href="/materi/">Lihat silabus</a>
+    </div>
+  </PageHero>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Cara kerja</span>
+        <h2>Empat langkah dari pemula sampai punya trading plan</h2>
+      </div>
+      <ol class="steps">
+        {
+          steps.map((s, i) => (
+            <li class="card">
+              <span class="num mono">{String(i + 1).padStart(2, '0')}</span>
+              <h3>{s.title}</h3>
+              <p>{s.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Mentor</span>
+        <h2>Mentor yang mengisi kelas Tradix</h2>
+        <p class="lead">Mereka juga yang membawakan sesi di webinar dan seminar offline Tradix.</p>
+      </div>
+      <div class="grid grid-3 mentors">
+        {mentors.map((p) => <PersonCard person={p} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Format</span>
+        <h2>Tiga format bimbingan</h2>
+      </div>
+      <div class="grid grid-3">
+        {
+          formats.map((f) => (
+            <article class="card">
+              <span class="icon-tile">
+                <Icon name={f.icon} />
+              </span>
+              <h3>{f.title}</h3>
+              <p>{f.text}</p>
+            </article>
+          ))
+        }
+      </div>
+      <p class="disclaimer" style="margin-top:32px">
+        <strong>Catatan:</strong> Mentor membagikan cara berpikir dan analisa sebagai bahan belajar. Keputusan transaksi dan
+        risikonya tetap tanggung jawab masing-masing member.
+      </p>
+    </div>
+  </section>
+
+  <CtaBand title="Mulai minggu pertamamu bersama mentor Tradix" />
+</Base>
+
+<style>
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    counter-reset: s;
+  }
+  @media (min-width: 1001px) {
+    .mentors {
+      grid-template-columns: repeat(2, minmax(0, 380px));
+    }
+  }
+  .num {
+    font-size: 2.2rem;
+    color: var(--accent-2);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  @media (max-width: 1000px) {
+    .steps {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 600px) {
+    .steps {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

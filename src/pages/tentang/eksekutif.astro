@@ -1,0 +1,90 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import PersonCard from '../../components/PersonCard.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { team } from '../../data/team';
+
+const execs = team.filter((p) => p.group === 'eksekutif');
+const analysts = team.filter((p) => p.group === 'mentor');
+
+const duties = [
+  { title: 'Founder', text: 'Arah komunitas, kurikulum dan kualitas materi.' },
+  { title: 'CEO', text: 'Operasional harian, jadwal event dan hubungan dengan partner.' },
+  { title: 'Tim analis', text: 'Market update, sharing analisa dan bedah chart member.' },
+];
+---
+
+<Base title="Eksekutif" description="Tim eksekutif dan analis yang menjalankan Tradix Community setiap hari.">
+  <PageHero
+    eyebrow="Tentang · Eksekutif"
+    title="Tim yang menjalankan Tradix setiap hari"
+    lead="Dari kurikulum, jadwal webinar, sampai kerja sama dengan exchange dan komunitas partner."
+    crumbs={[
+      { label: 'Tentang', href: '/tentang/' },
+      { label: 'Eksekutif', href: '/tentang/eksekutif/' },
+    ]}
+  />
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Eksekutif</span>
+        <h2>Pimpinan Tradix Community</h2>
+      </div>
+      <div class="grid grid-3">
+        {execs.map((p) => <PersonCard person={p} />)}
+        {analysts.map((p) => <PersonCard person={p} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Struktur</span>
+        <h2>Siapa mengurus apa</h2>
+      </div>
+      <ol class="duties">
+        {
+          duties.map((d) => (
+            <li>
+              <h3>{d.title}</h3>
+              <p>{d.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <CtaBand />
+</Base>
+
+<style>
+  .duties {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid var(--line-2);
+  }
+  .duties li {
+    display: grid;
+    gap: 8px;
+    padding: 28px 24px 0 0;
+  }
+  .duties p {
+    color: var(--ink-2);
+  }
+  @media (max-width: 760px) {
+    .duties {
+      grid-template-columns: 1fr;
+    }
+    .duties li {
+      padding: 20px 0;
+      border-bottom: 1px solid var(--line);
+    }
+  }
+</style>

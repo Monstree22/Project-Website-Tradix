@@ -1,0 +1,142 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Icon from '../../components/Icon.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { nav, stats } from '../../data/site';
+import { team } from '../../data/team';
+
+const subs = nav.find((n) => n.children)!.children!;
+const img: Record<string, string> = {
+  '/tentang/komunitas/': '/images/events/meetup-bogor.webp',
+  '/tentang/founder/': '/images/team/kenzo.webp',
+  '/tentang/mentorship/': '/images/team/koh.webp',
+  '/tentang/eksekutif/': '/images/team/ihza.webp',
+};
+const values = [
+  { icon: 'book', title: 'Edukasi dulu', text: 'Analisa yang dibagikan adalah bahan belajar, bukan perintah beli atau jual.' },
+  { icon: 'shield', title: 'Tanpa hype', text: 'Tidak ada janji cepat kaya. Risiko dibahas sejujur profitnya.' },
+  { icon: 'users', title: 'Belajar bareng', text: 'Pemula bebas bertanya; member senior berbagi setup dan pengalaman.' },
+] as const;
+---
+
+<Base title="Tentang" description="Kenali Tradix Community: komunitas, founder, program mentorship dan tim eksekutif.">
+  <PageHero
+    eyebrow="Tentang Tradix"
+    title="Komunitas trading yang dibangun untuk belajar, bukan untuk jualan sinyal"
+    lead="Tradix Community adalah tempat belajar lebih dari 350 trader crypto dan forex di Indonesia: gratis, terbuka untuk pemula, dan jujur soal risiko."
+    crumbs={[{ label: 'Tentang', href: '/tentang/' }]}
+  />
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Jelajahi</span>
+        <h2>Empat sisi Tradix</h2>
+      </div>
+      <div class="grid grid-4 subs">
+        {
+          subs.map((s) => (
+            <a class="card sub" href={s.href}>
+              <div class="frame">
+                <img src={img[s.href]} alt="" width="600" height="600" loading="lazy" />
+              </div>
+              <h3>{s.label}</h3>
+              <p>{s.desc}</p>
+              <span class="link-arrow">
+                Buka <Icon name="arrow" />
+              </span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="wrap values">
+      <div class="section-head">
+        <span class="eyebrow">Prinsip</span>
+        <h2>Tiga hal yang tidak kami tawar</h2>
+        <dl class="mini-stats">
+          {
+            stats.map((s) => (
+              <div>
+                <dd class="mono">{s.value}</dd>
+                <dt>{s.label}</dt>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+      <div class="grid">
+        {
+          values.map((v) => (
+            <article class="card row">
+              <span class="icon-tile">
+                <Icon name={v.icon} />
+              </span>
+              <div>
+                <h3>{v.title}</h3>
+                <p>{v.text}</p>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <CtaBand />
+</Base>
+
+<style>
+  .sub {
+    padding: 12px 12px 18px;
+  }
+  .sub .frame {
+    aspect-ratio: 1;
+    margin-bottom: 6px;
+  }
+  .sub .frame img {
+    object-position: center 25%;
+  }
+  .sub h3,
+  .sub p,
+  .sub .link-arrow {
+    padding-inline: 8px;
+  }
+  .values {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: clamp(32px, 5vw, 72px);
+    align-items: start;
+  }
+  .row {
+    grid-template-columns: auto 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  .row h3 {
+    margin-bottom: 6px;
+  }
+  .mini-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin: 16px 0 0;
+  }
+  .mini-stats dd {
+    margin: 0;
+    font-size: 2rem;
+  }
+  .mini-stats dt {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  @media (max-width: 860px) {
+    .values {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

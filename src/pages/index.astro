@@ -1,0 +1,322 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import MarketTicker from '../components/MarketTicker.astro';
+import PersonCard from '../components/PersonCard.astro';
+import EventCard from '../components/EventCard.astro';
+import FaqList from '../components/FaqList.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { site, stats } from '../data/site';
+import { roadmap } from '../data/materi';
+import { team } from '../data/team';
+import { events, upcomingEvents } from '../data/events';
+import { faqGroups } from '../data/faq';
+
+// Poster rasio 4:5 supaya tampil utuh (tidak terpotong) di grid hero.
+const heroPosters = ['webinar-paham-makro', 'meetup-trader-disiplin', 'trivtalks-bekasi'].map(
+  (slug) => events.find((e) => e.slug === slug)!,
+);
+const latest = (upcomingEvents.length ? upcomingEvents : events.filter((e) => e.date)).slice(0, 3);
+const faqTeaser = faqGroups.flatMap((g) => g.items).slice(0, 4);
+
+const benefits = [
+  { icon: 'chart', title: 'Update market harian', text: 'Kondisi BTC, altcoin, gold dan forex dirangkum setiap hari di grup.' },
+  { icon: 'mic', title: 'Webinar rutin', text: 'Belajar langsung dari trader aktif dan tamu dari komunitas partner.' },
+  { icon: 'candles', title: 'Bedah chart bareng', text: 'Kirim setup kamu, dibahas bersama member dan analis Tradix.' },
+  { icon: 'users', title: 'Meetup offline', text: 'Ketemu trader lain di Bogor, Bekasi dan kota berikutnya.' },
+  { icon: 'shield', title: 'Risiko dulu, profit belakangan', text: 'Position sizing dan stop loss diajarkan sebelum strategi entry.' },
+  { icon: 'gift', title: 'Giveaway member aktif', text: 'Merchandise dan USDT untuk peserta event dan member yang aktif.' },
+] as const;
+---
+
+<Base>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy" data-enter>
+        <span class="eyebrow">Official Partner BingX · Gratis</span>
+        <h1>Belajar trading crypto & forex dari nol, bareng {stats[0].value} trader Indonesia</h1>
+        <p class="lead">
+          Tradix adalah komunitas edukasi, bukan grup sinyal. Roadmap 8 minggu, webinar, bedah chart dan meetup offline,
+          semuanya tanpa biaya.
+        </p>
+        <div class="btn-row">
+          <a class="btn btn--primary" href={site.whatsapp} target="_blank" rel="noopener">
+            <Icon name="whatsapp" /> Gabung WhatsApp gratis
+          </a>
+          <a class="btn btn--ghost" href="/materi/">Lihat roadmap belajar</a>
+        </div>
+        <dl class="hero-stats">
+          {
+            stats.map((s) => (
+              <div>
+                <dt>{s.label}</dt>
+                <dd class="mono">{s.value}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+
+      <div class="hero-visual" data-enter>
+        {
+          heroPosters.map((e, i) => (
+            <a class:list={['hv', `hv-${i}`]} href={`/event/#${e.slug}`} aria-label={`Event: ${e.title}`}>
+              <div class="frame">
+                <img
+                  src={e.poster}
+                  alt=""
+                  width="900"
+                  height={e.posterRatio === '1/1' ? 900 : 1125}
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                  fetchpriority={i === 0 ? 'high' : undefined}
+                />
+              </div>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <MarketTicker />
+
+  <section class="section" id="kenapa">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Kenapa Tradix</span>
+        <h2>Lingkungan belajar trading yang aktif setiap hari</h2>
+        <p class="lead">Semua yang dibutuhkan pemula untuk mulai serius, tanpa janji cepat kaya.</p>
+      </div>
+      <div class="grid grid-3">
+        {
+          benefits.map((b) => (
+            <article class="card">
+              <span class="icon-tile">
+                <Icon name={b.icon} />
+              </span>
+              <h3>{b.title}</h3>
+              <p>{b.text}</p>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--paper" id="roadmap">
+    <div class="wrap">
+      <div class="section-head section-head--split">
+        <div class="section-head" style="margin:0">
+          <span class="eyebrow">Materi</span>
+          <h2>Roadmap belajar 8 minggu</h2>
+          <p class="lead">Tersusun bertahap: dari istilah dasar sampai punya trading plan sendiri.</p>
+        </div>
+        <a class="link-arrow" href="/materi/">Lihat silabus lengkap <Icon name="arrow" /></a>
+      </div>
+      <ol class="weeks">
+        {
+          roadmap.map((w) => (
+            <li>
+              <a class="card week" href={`/materi/#minggu-${w.week}`}>
+                <span class="wk mono">Minggu {String(w.week).padStart(2, '0')}</span>
+                <h3>{w.title}</h3>
+                <p>{w.summary}</p>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" id="tim">
+    <div class="wrap">
+      <div class="section-head section-head--split">
+        <div class="section-head" style="margin:0">
+          <span class="eyebrow">Tentang</span>
+          <h2>Orang di balik Tradix</h2>
+          <p class="lead">Founder, eksekutif dan analis yang mengisi kelas, webinar dan meetup.</p>
+        </div>
+        <a class="link-arrow" href="/tentang/">Kenali komunitasnya <Icon name="arrow" /></a>
+      </div>
+      <div class="grid grid-3">
+        {
+          team.map((p) => (
+            <PersonCard
+              person={p}
+              href={p.slug === 'kenzo' ? '/tentang/founder/' : p.group === 'mentor' ? '/tentang/mentorship/' : '/tentang/eksekutif/'}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt" id="event">
+    <div class="wrap">
+      <div class="section-head section-head--split">
+        <div class="section-head" style="margin:0">
+          <span class="eyebrow">Event</span>
+          <h2>{upcomingEvents.length ? 'Event mendatang' : 'Event terbaru Tradix'}</h2>
+          <p class="lead">Webinar online dan meetup offline bersama partner komunitas.</p>
+        </div>
+        <a class="link-arrow" href="/event/">Semua event <Icon name="arrow" /></a>
+      </div>
+      <div class="grid grid-3">
+        {latest.map((e) => <EventCard event={e} compact />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="faq">
+    <div class="wrap faq-split">
+      <div class="section-head">
+        <span class="eyebrow">FAQ</span>
+        <h2>Pertanyaan sebelum gabung</h2>
+        <p class="lead">Jawaban singkat untuk yang paling sering ditanya calon member.</p>
+        <a class="link-arrow" href="/faq/">Semua pertanyaan <Icon name="arrow" /></a>
+      </div>
+      <FaqList items={faqTeaser} />
+    </div>
+  </section>
+
+  <CtaBand />
+</Base>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: grid;
+    align-items: center;
+    padding-top: calc(var(--header-h) + 40px);
+    padding-bottom: 56px;
+    background:
+      radial-gradient(50% 60% at 78% 40%, rgb(47 123 255 / 0.22), transparent 70%),
+      radial-gradient(40% 40% at 10% 100%, rgb(31 199 126 / 0.08), transparent 70%),
+      var(--bg);
+    overflow: hidden;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: clamp(32px, 5vw, 72px);
+    align-items: center;
+  }
+  .hero-copy {
+    display: grid;
+    gap: 24px;
+    justify-items: start;
+  }
+  .hero-copy h1 {
+    font-size: clamp(2.5rem, 5.2vw, 4.4rem);
+    max-width: 15ch;
+  }
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 12px 32px;
+    margin: 12px 0 0;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+  }
+  .hero-stats div {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .hero-stats dd {
+    margin: 0;
+    font-size: 1.6rem;
+    color: var(--ink);
+  }
+  .hero-stats dt {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .hero-visual {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  .hv {
+    display: block;
+    border-radius: var(--r-lg);
+    text-decoration: none;
+    transition: transform 0.25s var(--ease);
+  }
+  .hv:hover {
+    transform: translateY(-2px);
+  }
+  .hv .frame {
+    aspect-ratio: 4 / 5;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--line-2);
+    box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.8);
+  }
+  .hv-0 {
+    grid-row: 1 / 3;
+  }
+  .hv-0 .frame {
+    aspect-ratio: auto;
+    height: 100%;
+  }
+  .hv-0 {
+    height: 100%;
+  }
+
+  .weeks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .week {
+    height: 100%;
+    gap: 10px;
+  }
+  .week h3 {
+    color: var(--paper-ink);
+  }
+  .wk {
+    font-size: 0.8rem;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+  }
+
+  .faq-split {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: clamp(32px, 5vw, 72px);
+    align-items: start;
+  }
+  .faq-split .section-head {
+    justify-items: start;
+  }
+
+  @media (max-width: 1000px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+    }
+    .hero-visual {
+      max-width: 640px;
+    }
+    .weeks {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .faq-split {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 640px) {
+    .hero-stats {
+      grid-template-columns: repeat(2, auto);
+    }
+    .weeks {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

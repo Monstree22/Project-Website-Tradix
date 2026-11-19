@@ -1,0 +1,40 @@
+---
+// Ticker harga LIVE dari TradingView (gratis, tanpa API key).
+// Menggantikan angka statis di situs lama. Ubah daftar simbol di `symbols`.
+const config = {
+  symbols: [
+    { proName: 'BINANCE:BTCUSDT', title: 'BTC/USDT' },
+    { proName: 'BINANCE:ETHUSDT', title: 'ETH/USDT' },
+    { proName: 'BINANCE:SOLUSDT', title: 'SOL/USDT' },
+    { proName: 'OANDA:XAUUSD', title: 'Gold' },
+    { proName: 'FX:EURUSD', title: 'EUR/USD' },
+    { proName: 'FX_IDC:USDIDR', title: 'USD/IDR' },
+  ],
+  showSymbolLogo: true,
+  isTransparent: true,
+  displayMode: 'adaptive',
+  colorTheme: 'dark',
+  locale: 'id',
+};
+---
+
+<div class="ticker" aria-label="Harga pasar live dari TradingView">
+  <div class="tradingview-widget-container">
+    <div class="tradingview-widget-container__widget"></div>
+    <script
+      is:inline
+      type="text/javascript"
+      src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js"
+      async
+      set:html={JSON.stringify(config)}
+    />
+  </div>
+</div>
+
+<style>
+  .ticker {
+    border-block: 1px solid var(--line);
+    background: var(--bg-2);
+    min-height: 46px;
+  }
+</style>

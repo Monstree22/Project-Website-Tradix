@@ -1,0 +1,70 @@
+---
+import type { Person } from '../data/team';
+interface Props {
+  person: Person;
+  href?: string;
+}
+const { person, href } = Astro.props;
+const Tag = href ? 'a' : 'article';
+---
+
+<Tag class="person card" href={href}>
+  <div class="frame portrait">
+    <img src={person.photo} alt={`Foto ${person.name}`} width="480" height="600" loading="lazy" />
+  </div>
+  <div class="meta">
+    <h3>{person.name}</h3>
+    <p class="role">{person.role}</p>
+  </div>
+  <p>{person.bio}</p>
+  <div class="chips">{person.focus.map((f) => <span class="chip">{f}</span>)}</div>
+</Tag>
+
+<style>
+  .person {
+    padding: 14px 14px 22px;
+    gap: 14px;
+  }
+  .portrait {
+    aspect-ratio: 4 / 5;
+  }
+  .portrait img {
+    object-position: center 20%;
+  }
+  .meta,
+  .person > p,
+  .chips {
+    padding-inline: 8px;
+  }
+  .meta {
+    display: grid;
+    gap: 4px;
+  }
+  @media (max-width: 640px) {
+    .person {
+      grid-template-columns: 112px 1fr;
+      column-gap: 16px;
+      align-items: start;
+    }
+    .portrait {
+      grid-row: 1 / 4;
+      aspect-ratio: 4 / 5;
+    }
+    .meta,
+    .person > p,
+    .chips {
+      padding-inline: 0;
+    }
+    .chips {
+      display: none;
+    }
+    .person > p {
+      font-size: 0.92rem;
+    }
+  }
+  .role {
+    color: var(--accent-2) !important;
+    font-weight: 600;
+    font-size: 0.92rem !important;
+  }
+</style>

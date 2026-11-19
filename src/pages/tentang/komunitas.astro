@@ -1,0 +1,184 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Icon from '../../components/Icon.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import { stats } from '../../data/site';
+import { tracks } from '../../data/materi';
+
+const rhythm = [
+  { icon: 'chart', when: 'Setiap hari', title: 'Market update', text: 'Rangkuman kondisi BTC, altcoin, gold dan forex langsung di grup.' },
+  { icon: 'candles', when: 'Setiap hari', title: 'Bedah chart', text: 'Member mengirim setup, dibahas bersama analis dan member lain.' },
+  { icon: 'mic', when: 'Rutin', title: 'Webinar online', text: 'Sesi teknikal, makro dan psikologi bersama trader aktif dan tamu partner.' },
+  { icon: 'users', when: 'Berkala', title: 'Meetup offline', text: 'Seminar, talkshow dan ngopi bareng trader di Bogor dan Bekasi.' },
+] as const;
+
+const partners = [
+  { name: 'BingX', note: 'Official partner' },
+  { name: 'Indonesia Blockchain Week 2026', note: 'Partner squad' },
+  { name: 'TRIV · #TrivTalks', note: 'Talkshow & meetup' },
+  { name: 'BGB Builder', note: 'Seminar Bogor' },
+  { name: 'Kompaschain', note: 'Meetup Bogor' },
+  { name: 'Crypto Cuan Madiun', note: 'Webinar makro' },
+  { name: 'Web3 Enthusiast', note: 'Komunitas partner' },
+  { name: 'Cryptowave', note: 'Komunitas partner' },
+];
+---
+
+<Base
+  title="Komunitas"
+  description="Siapa Tradix Community, apa yang dipelajari, ritme kegiatan harian dan partner komunitas."
+>
+  <PageHero
+    eyebrow="Tentang · Komunitas"
+    title="Ruang belajar trading yang hidup setiap hari"
+    lead="Tradix Community membantu trader Indonesia berkembang lewat pembelajaran bersama, diskusi rutin, webinar dan networking antar trader."
+    crumbs={[
+      { label: 'Tentang', href: '/tentang/' },
+      { label: 'Komunitas', href: '/tentang/komunitas/' },
+    ]}
+  >
+    <div class="chips">{tracks.map((t) => <span class="chip">{t}</span>)}</div>
+  </PageHero>
+
+  <section class="section">
+    <div class="wrap split">
+      <div class="frame photo">
+        <img
+          src="/images/events/trivtalks-bekasi.webp"
+          alt="Poster talkshow #TrivTalks Tradix di Bekasi"
+          width="900"
+          height="1126"
+          loading="lazy"
+        />
+      </div>
+      <div class="prose-col">
+        <span class="eyebrow">Kenapa berbeda</span>
+        <h2>Komunitas {stats[0].value} trader yang belajar, bukan menyalin sinyal</h2>
+        <div class="prose">
+          <p>
+            Banyak pemula masuk ke trading lewat grup sinyal dan janji profit besar. Tradix memilih jalan sebaliknya:
+            <strong>belajar cara membaca market sendiri</strong>, mengelola risiko, dan berdiskusi terbuka tanpa takut
+            dihakimi.
+          </p>
+          <p>
+            Hari ini Tradix sudah menggelar lebih dari {stats[1].value} webinar, menghadirkan {stats[3].value} speaker, dan
+            mempertemukan {stats[2].value} peserta di event offline bersama partner seperti BingX, TRIV dan Indonesia Blockchain
+            Week.
+          </p>
+        </div>
+        <p class="quote">“Belajar Trading Bersama. Bertumbuh Bersama.”</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Ritme</span>
+        <h2>Apa yang terjadi di grup setiap minggu</h2>
+      </div>
+      <div class="grid grid-4">
+        {
+          rhythm.map((r) => (
+            <article class="card">
+              <span class="icon-tile">
+                <Icon name={r.icon} />
+              </span>
+              <span class="badge badge--neutral">{r.when}</span>
+              <h3>{r.title}</h3>
+              <p>{r.text}</p>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Partner</span>
+        <h2>Bergerak bersama ekosistem crypto Indonesia</h2>
+        <p class="lead">Exchange, event dan komunitas yang sudah berkolaborasi dengan Tradix.</p>
+      </div>
+      <ul class="partners">
+        {
+          partners.map((p) => (
+            <li>
+              <strong>{p.name}</strong>
+              <span>{p.note}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <CtaBand />
+</Base>
+
+<style>
+  .split {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: clamp(32px, 6vw, 88px);
+    align-items: center;
+  }
+  .photo {
+    aspect-ratio: 4 / 5;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--line-2);
+  }
+  .prose-col {
+    display: grid;
+    gap: 22px;
+  }
+  .quote {
+    font-family: var(--font-display);
+    font-size: clamp(1.3rem, 2vw, 1.6rem);
+    font-weight: 600;
+    color: var(--accent-2);
+    border-left: 2px solid var(--accent);
+    padding-left: 18px;
+  }
+  .partners {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+  }
+  .partners li {
+    display: grid;
+    gap: 4px;
+    padding: 24px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    transition: background-color 0.2s;
+  }
+  .partners li:hover {
+    background: var(--surface);
+  }
+  .partners strong {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+  }
+  .partners span {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  @media (max-width: 900px) {
+    .split {
+      grid-template-columns: 1fr;
+    }
+    .photo {
+      max-width: 520px;
+    }
+    .partners {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

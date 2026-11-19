@@ -1,0 +1,183 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import Icon from '../components/Icon.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { roadmap, tracks } from '../data/materi';
+
+const phases = [
+  { name: 'Fondasi', weeks: [1, 2, 3], text: 'Bahasa market dan cara membaca harga.' },
+  { name: 'Struktur & risiko', weeks: [4, 5], text: 'Arah trend dan cara bertahan saat salah.' },
+  { name: 'Konteks & mental', weeks: [6, 7, 8], text: 'Berita, makro, dan disiplin menjalankan plan.' },
+];
+---
+
+<Base
+  title="Materi"
+  description="Roadmap belajar trading 8 minggu dari Tradix: basic trading, candlestick, support resistance, market structure, risk management, fundamental, crypto macro dan psikologi."
+>
+  <PageHero
+    eyebrow="Materi"
+    title="Roadmap belajar trading 8 minggu"
+    lead="Satu topik setiap minggu, berurutan dari nol. Selesai minggu ke-8, kamu punya trading plan pribadi yang bisa diuji."
+    crumbs={[{ label: 'Materi', href: '/materi/' }]}
+  >
+    <div class="chips">{tracks.map((t) => <span class="chip">{t}</span>)}</div>
+  </PageHero>
+
+  <section class="section">
+    <div class="wrap layout">
+      <aside class="phases" aria-label="Tahapan">
+        {
+          phases.map((p, i) => (
+            <div class="phase">
+              <span class="mono">Tahap {i + 1}</span>
+              <h2>{p.name}</h2>
+              <p class="muted">{p.text}</p>
+              <div class="chips">
+                {p.weeks.map((w) => (
+                  <a class="chip" href={`#minggu-${w}`}>
+                    Minggu {w}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </aside>
+
+      <ol class="timeline">
+        {
+          roadmap.map((w) => (
+            <li id={`minggu-${w.week}`} class="card wk">
+              <div class="wk-head">
+                <span class="wk-num mono">{String(w.week).padStart(2, '0')}</span>
+                <div>
+                  <h3>{w.title}</h3>
+                  <p>{w.summary}</p>
+                </div>
+              </div>
+              <ul class="topics">
+                {w.topics.map((t) => (
+                  <li>
+                    <Icon name="target" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <CtaBand title="Mulai Minggu 1 bersama member lain" text="Materi dibahas di grup WhatsApp dan webinar. Gabung gratis, mulai dari Basic Trading." />
+</Base>
+
+<style>
+  .layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: clamp(32px, 5vw, 72px);
+    align-items: start;
+  }
+  .phases {
+    position: sticky;
+    top: calc(var(--header-h) + 24px);
+    display: grid;
+    gap: 28px;
+  }
+  .phase {
+    display: grid;
+    gap: 8px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .phase .mono {
+    font-size: 0.78rem;
+    color: var(--accent-2);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .phase h2 {
+    font-size: 1.5rem;
+  }
+  .phase .chip {
+    text-decoration: none;
+    min-height: 44px;
+    transition: border-color 0.15s;
+  }
+  .phase .chip:hover {
+    border-color: var(--accent-2);
+  }
+  .timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 16px;
+  }
+  .wk {
+    gap: 20px;
+    scroll-margin-top: calc(var(--header-h) + 24px);
+  }
+  .wk:target {
+    border-color: var(--accent);
+  }
+  .wk-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .wk-num {
+    font-size: 2.4rem;
+    line-height: 1;
+    color: var(--accent-2);
+  }
+  .wk-head h3 {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+  }
+  .topics {
+    list-style: none;
+    margin: 0;
+    padding: 18px 0 0;
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 24px;
+    color: var(--ink-2);
+    font-size: 0.96rem;
+  }
+  .topics li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .topics :global(svg) {
+    width: 16px;
+    height: 16px;
+    margin-top: 4px;
+    color: var(--up);
+    flex: none;
+  }
+  @media (max-width: 960px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+    .phases {
+      position: static;
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  @media (max-width: 680px) {
+    .phases {
+      grid-template-columns: 1fr;
+    }
+    .topics {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,158 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { trades } from '../data/performa';
+
+const realized = trades.filter((t) => t.status === 'realized').length;
+---
+
+<Base
+  title="Performa"
+  description="Hasil trading yang dibagikan di Tradix Community, lengkap dengan leverage, status posisi dan peringatan risiko."
+>
+  <PageHero
+    eyebrow="Performa"
+    title="Hasil trading yang dibagikan di komunitas, apa adanya"
+    lead="Kami tampilkan screenshot asli beserta leverage dan status posisinya, supaya kamu melihat gambaran utuh, bukan hanya angka besar."
+    crumbs={[{ label: 'Performa', href: '/performa/' }]}
+  />
+
+  <section class="section">
+    <div class="wrap">
+      <div class="disclaimer warn-top">
+        <strong>Baca dulu:</strong> Hasil di bawah memakai leverage 20x sampai 100x. Pada leverage 100x, harga cukup bergerak sekitar
+        1% berlawanan untuk menghabiskan margin. Dari {trades.length} posisi, {realized} sudah ditutup (realized) dan {
+          trades.length - realized
+        } masih terbuka saat screenshot diambil (unrealized). Performa masa lalu tidak menjamin hasil di masa depan.
+      </div>
+
+      <div class="grid grid-3 trades">
+        {
+          trades.map((t) => (
+            <article class="card trade">
+              <a class="frame shot" href={t.image} target="_blank" rel="noopener" aria-label={`Buka screenshot ${t.pair} ukuran penuh`}>
+                <img src={t.image} alt={`Screenshot PnL ${t.pair} ${t.side} ${t.leverage} ${t.pnl}`} width="900" height="900" loading="lazy" />
+              </a>
+              <div class="trade-head">
+                <h2>{t.pair}</h2>
+                <span class="pnl mono">{t.pnl}</span>
+              </div>
+              <div class="chips">
+                <span class:list={['badge', t.side === 'Long' ? 'badge--up' : 'badge--neutral']}>{t.side}</span>
+                <span class="badge badge--warn">Leverage {t.leverage}</span>
+                <span class:list={['badge', t.status === 'realized' ? 'badge--up' : 'badge--warn']}>
+                  {t.status === 'realized' ? 'Realized · ditutup' : 'Unrealized · masih terbuka'}
+                </span>
+              </div>
+              <dl class="kv">
+                <div>
+                  <dt>Harga entry</dt>
+                  <dd class="mono">{t.entry}</dd>
+                </div>
+                <div>
+                  <dt>{t.status === 'realized' ? 'Harga tutup' : 'Harga terakhir'}</dt>
+                  <dd class="mono">{t.last}</dd>
+                </div>
+                <div>
+                  <dt>Tanggal</dt>
+                  <dd>{t.date}</dd>
+                </div>
+                <div>
+                  <dt>Akun</dt>
+                  <dd>{t.owner}</dd>
+                </div>
+              </dl>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="wrap why">
+      <div class="section-head">
+        <span class="eyebrow">Kenapa kami tunjukkan</span>
+        <h2>Angka besar datang bersama risiko besar</h2>
+      </div>
+      <div class="prose">
+        <p>
+          Persentase PnL di exchange futures dihitung dari <strong>margin</strong>, bukan dari total modal. Posisi +300% dengan
+          leverage 20x berarti harga bergerak sekitar 15% ke arah yang benar; ke arah sebaliknya, gerakan 5% sudah bisa
+          menghapus margin itu.
+        </p>
+        <p>
+          Karena itu Minggu 5 roadmap Tradix khusus membahas <strong>risk management</strong>: ukuran posisi, stop loss dan
+          leverage yang masuk akal untuk pemula. Pelajari itu sebelum mencoba meniru hasil di halaman ini.
+        </p>
+        <a class="link-arrow" href="/materi/#minggu-5">Lihat materi risk management</a>
+      </div>
+    </div>
+  </section>
+
+  <CtaBand title="Belajar mengelola risiko sebelum mengejar profit" />
+</Base>
+
+<style>
+  .warn-top {
+    margin-bottom: 32px;
+    max-width: 900px;
+  }
+  .trade {
+    padding: 12px 12px 22px;
+    gap: 14px;
+  }
+  .shot {
+    display: block;
+    aspect-ratio: 1;
+  }
+  .shot img {
+    object-fit: contain;
+    background: #0a0a0a;
+  }
+  .trade-head,
+  .trade .chips,
+  .kv {
+    padding-inline: 8px;
+  }
+  .trade-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .trade-head h2 {
+    font-size: 1.3rem;
+  }
+  .pnl {
+    color: var(--up);
+    font-size: 1.3rem;
+  }
+  .kv {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 4px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  .kv dt {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .kv dd {
+    margin: 0;
+    font-size: 0.95rem;
+  }
+  .why {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(32px, 5vw, 72px);
+  }
+  @media (max-width: 860px) {
+    .why {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
