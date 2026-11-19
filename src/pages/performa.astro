@@ -5,6 +5,12 @@ import CtaBand from '../components/CtaBand.astro';
 import { trades } from '../data/performa';
 
 const realized = trades.filter((t) => t.status === 'realized').length;
+const unrealized = trades.length - realized;
+const levs = trades.map((t) => parseInt(t.leverage));
+const minLev = Math.min(...levs);
+const maxLev = Math.max(...levs);
+// Pada leverage L, gerakan harga ~100/L % berlawanan arah sudah cukup menghabiskan margin.
+const wipe = (100 / maxLev).toLocaleString('id-ID', { maximumFractionDigits: 1 });
 ---
 
 <Base
@@ -21,10 +27,12 @@ const realized = trades.filter((t) => t.status === 'realized').length;
   <section class="section">
     <div class="wrap">
       <div class="disclaimer warn-top">
-        <strong>Baca dulu:</strong> Hasil di bawah memakai leverage 20x sampai 100x. Pada leverage 100x, harga cukup bergerak sekitar
-        1% berlawanan untuk menghabiskan margin. Dari {trades.length} posisi, {realized} sudah ditutup (realized) dan {
-          trades.length - realized
-        } masih terbuka saat screenshot diambil (unrealized). Performa masa lalu tidak menjamin hasil di masa depan.
+        <strong>Baca dulu:</strong> Hasil di bawah memakai leverage {minLev}x sampai {maxLev}x. Pada leverage {maxLev}x, harga cukup
+        bergerak sekitar {wipe}% berlawanan untuk menghabiskan margin. {
+          unrealized === 0
+            ? `Semua ${trades.length} posisi sudah ditutup (realized), tapi ini hanya posisi yang profit; posisi yang loss tidak ditampilkan di sini.`
+            : `Dari ${trades.length} posisi, ${realized} sudah ditutup (realized) dan ${unrealized} masih terbuka saat screenshot diambil (unrealized).`
+        } Performa masa lalu tidak menjamin hasil di masa depan.
       </div>
 
       <div class="grid grid-3 trades">
