@@ -81,5 +81,18 @@ Hosting statis lain (Netlify, Vercel, Cloudflare Pages): build command `npm run 
 ## Catatan
 
 - Ticker harga di beranda memakai widget gratis TradingView (data live, tanpa API key).
+- Grafik besar di hero beranda (`src/components/TerminalHero.astro`) menampilkan **BTC/USDT 1 menit asli**,
+  diambil langsung dari browser pengunjung: Binance (mirror publik `data-api.binance.vision`), cadangan OKX.
+  Kalau keduanya gagal, grafik otomatis memakai data simulasi berlabel "Ilustrasi".
+  BingX belum bisa dipakai langsung karena API-nya menolak permintaan dari browser (CORS); kalau nanti mau,
+  tambahkan proxy di server sendiri, misalnya di Nginx:
+  ```nginx
+  location /api/bingx/ {
+    proxy_pass https://open-api.bingx.com/;
+    proxy_set_header Host open-api.bingx.com;
+    proxy_ssl_server_name on;
+  }
+  ```
+  lalu tambahkan sumber `/api/bingx/openApi/spot/v2/market/kline?symbol=BTC-USDT&interval=1m&limit=…` di `SOURCES`.
 - Gambar share sosial media: `public/og-image.jpg`, dibuat dari `scripts/og-image.html` lewat `node scripts/make-og.cjs`.
 - Foto tim saat ini dipotong dari poster event. Ganti dengan foto asli resolusi lebih tinggi bila ada.

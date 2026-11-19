@@ -1,11 +1,14 @@
 ---
 // Latar hero bergaya terminal trading: grafik candlestick layar penuh yang terus bergerak.
 // - Saat dibuka: riwayat candle "diputar cepat" dari kiri ke kanan.
-// - Live: candle terakhir bergerak tiap ~100 ms, candle baru lahir tiap ~2,4 detik dan grafik bergeser.
+// - Live: data ASLI BTC/USDT 1 menit, diambil langsung dari browser pengunjung:
+//     1) Binance (mirror data publik data-api.binance.vision), 2) OKX.
+//   Diperbarui tiap 2 detik; harga candle terakhir dihaluskan supaya bergerak mulus.
+//   BingX (partner Tradix) belum bisa: API-nya menolak permintaan dari browser (CORS),
+//   jadi butuh proxy di server sendiri kalau nanti mau dipakai.
+// - Kalau semua sumber gagal: kembali ke data SIMULASI dengan label "Ilustrasi".
 // - Scroll: grafik miring ke belakang (3D) dan memudar.
 // - Desktop: crosshair mengikuti mouse + angka OHLC.
-// Data adalah SIMULASI (diberi label "Ilustrasi"), bukan harga aset sungguhan.
-// Harga asli tetap ada di ticker TradingView di bawah hero.
 ---
 
 <div class="terminal" aria-hidden="true" data-terminal>
@@ -15,7 +18,7 @@
   <div class="shade"></div>
   <div class="hud wrap">
     <div class="hud-row">
-      <span class="live"><i></i> Ilustrasi · 1m</span>
+      <span class="live" data-live><i></i> <span data-label>BTC/USDT · 1m</span></span>
       <span class="ohlc mono" data-ohlc>O — H — L — C —</span>
     </div>
   </div>
@@ -78,6 +81,11 @@
     background: rgb(15 23 38 / 0.7);
     backdrop-filter: blur(6px);
   }
+  .live.stale i,
+  .live.loading i {
+    background: var(--muted);
+    animation: none;
+  }
   .live i {
     width: 7px;
     height: 7px;
@@ -118,14 +126,19 @@
       transform: none;
       opacity: 1;
     }
-    .live i {
+    .live.stale i,
+  .live.loading i {
+    background: var(--muted);
+    animation: none;
+  }
+  .live i {
       animation: none;
     }
   }
 </style>
 
 <script>
-  type Candle = { o: number; h: number; l: number; c: number; v: number };
+  type Candle = { t: number; o: number; h: number; l: number; c: number; v: number };
 
   const root = document.querySelector<HTMLElement>('[data-terminal]');
   if (root) start(root);
@@ -138,7 +151,110 @@
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-    // ---------- data simulasi ----------
+    const liveEl = root.querySelector<HTMLElement>('[data-live]')!;
+    const labelEl = root.querySelector<HTMLElement>('[data-label]')!;
+    const candles: Candle[] = [];
+    let mode: 'loading' | 'live' | 'sim' = 'loading';
+    let source = '';
+    let target: Candle | null = null; // nilai terbaru dari API (candle terakhir)
+    let lastOk = 0;
+
+    const setStatus = (text: string, cls: '' | 'stale' | 'loading') => {
+      labelEl.textContent = text;
+      liveEl.classList.toggle('stale', cls === 'stale');
+      liveEl.classList.toggle('loading', cls === 'loading');
+    };
+    setStatus('BTC/USDT · memuat', 'loading');
+
+    // ---------- data asli ----------
+    const parseRow = (r: (string | number)[]): Candle => ({
+      t: +r[0],
+      o: +r[1],
+      h: +r[2],
+      l: +r[3],
+      c: +r[4],
+      v: +r[5],
+    });
+    const SOURCES = [
+      {
+        name: 'Binance',
+        url: (n: number) => `https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=${n}`,
+        parse: (j: any): Candle[] => (j as any[]).map(parseRow),
+      },
+      {
+        name: 'OKX',
+        url: (n: number) => `https://www.okx.com/api/v5/market/candles?instId=BTC-USDT&bar=1m&limit=${n}`,
+        parse: (j: any): Candle[] => (j.data as any[]).map(parseRow).reverse(),
+      },
+    ];
+    let src = SOURCES[0];
+
+    async function getJSON(url: string, ms: number) {
+      const ac = new AbortController();
+      const timer = setTimeout(() => ac.abort(), ms);
+      try {
+        const r = await fetch(url, { signal: ac.signal, cache: 'no-store' });
+        if (!r.ok) throw new Error(String(r.status));
+        return await r.json();
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function loadHistory() {
+      for (const s of SOURCES) {
+        try {
+          const list = s.parse(await getJSON(s.url(240), 4000));
+          if (list.length < 30 || list.some((k) => !isFinite(k.c))) throw new Error('data');
+          src = s;
+          return list;
+        } catch {
+          /* coba sumber berikutnya */
+        }
+      }
+      return null;
+    }
+
+    async function poll() {
+      if (mode !== 'live' || !running) return;
+      try {
+        const list = src.parse(await getJSON(src.url(2), 4000));
+        lastOk = Date.now();
+        const last = candles[candles.length - 1];
+        if (list[0].t > last.t + 60000) {
+          // tab sempat tidak aktif beberapa menit: muat ulang riwayat supaya tidak ada celah
+          const fresh = src.parse(await getJSON(src.url(240), 4000));
+          candles.length = 0;
+          candles.push(...fresh.map((k) => ({ ...k })));
+          target = fresh[fresh.length - 1];
+          shift = 0;
+        } else {
+          for (const k of list) {
+            const cur = candles[candles.length - 1];
+            if (k.t === cur.t) {
+              target = k;
+              cur.h = Math.max(cur.h, k.h);
+              cur.l = Math.min(cur.l, k.l);
+            } else if (k.t > cur.t) {
+              // candle sebelumnya selesai: kunci nilai finalnya, lalu buka candle baru
+              if (target && target.t === cur.t) Object.assign(cur, target);
+              candles.push({ ...k, c: k.o, h: k.o, l: k.o });
+              target = k;
+              if (candles.length > 400) candles.splice(0, candles.length - 400);
+              shift = 1;
+            } else {
+              const old = candles.find((c) => c.t === k.t);
+              if (old) Object.assign(old, k);
+            }
+          }
+        }
+        setStatus(`BTC/USDT · 1m · ${source}`, '');
+      } catch {
+        if (Date.now() - lastOk > 20000) setStatus('BTC/USDT · koneksi tertunda', 'stale');
+      }
+    }
+
+    // ---------- data simulasi (cadangan) ----------
     let seed = 42;
     const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
     const gauss = () => {
@@ -149,7 +265,6 @@
     };
     let vol = 0.006;
     let price = 100;
-    const candles: Candle[] = [];
     const makeCandle = (i: number): Candle => {
       const o = price;
       let h = o, l = o, c = o;
@@ -161,9 +276,11 @@
         l = Math.min(l, c);
       }
       price = c;
-      return { o, h, l, c, v: (0.4 + rnd()) * (Math.abs(c - o) / o) * 1e4 + 20 };
+      return { t: i, o, h, l, c, v: (0.4 + rnd()) * (Math.abs(c - o) / o) * 1e4 + 20 };
     };
-    for (let i = 0; i < 160; i++) candles.push(makeCandle(i));
+
+    const fmt = (p: number) =>
+      p >= 1000 ? p.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : p.toFixed(2);
 
     // ---------- ukuran ----------
     let W = 0, H = 0, dpr = 1, cw = 14;
@@ -181,7 +298,7 @@
     };
 
     // ---------- status animasi ----------
-    const AXIS_W = 74; // lebar sumbu harga kanan
+    const AXIS_W = 96; // lebar sumbu harga kanan
     let AXIS = AXIS_W;
     let intro = reduce ? 1 : 0; // 0..1 putar cepat riwayat
     let shift = 0; // geseran halus saat candle baru lahir (0..1)
@@ -195,6 +312,7 @@
       if (!W) return;
       ctx.clearRect(0, 0, W, H);
       AXIS = compact ? 0 : AXIS_W;
+      if (!candles.length) return;
       const n = visibleCount();
       const total = candles.length;
       const shown = Math.max(1, Math.round(n * intro));
@@ -318,7 +436,7 @@
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.globalAlpha = 1;
-        if (!compact) tag(plotW + 4, ly, last.c.toFixed(2), col, '#04120b');
+        if (!compact) tag(plotW + 4, ly, fmt(last.c), col, '#04120b');
         // titik berdenyut di harga terakhir
         const lx = xOf(n - 1);
         const pulse = (performance.now() % 1400) / 1400;
@@ -341,7 +459,7 @@
         const gy = top + ((bottom - top) * s) / steps;
         const p = hi - ((gy - top) / (bottom - top)) * (hi - lo);
         if (last && Math.abs(gy - y(last.c)) < 12) continue;
-        ctx.fillText(p.toFixed(2), plotW + 10, gy);
+        ctx.fillText(fmt(p), plotW + 10, gy);
       }
       }
 
@@ -357,7 +475,7 @@
         ctx.stroke();
         ctx.setLineDash([]);
         const p = hi - ((mouse.y - top) / (bottom - top)) * (hi - lo);
-        tag(plotW + 4, mouse.y, p.toFixed(2), '#2a3a56', '#eef2f8');
+        tag(plotW + 4, mouse.y, fmt(p), '#2a3a56', '#eef2f8');
         const k = vis[hoverIdx];
         if (k) setOHLC(k);
       } else if (last) {
@@ -379,7 +497,7 @@
 
     let lastOHLC = '';
     function setOHLC(k: Candle) {
-      const t = `O ${k.o.toFixed(2)}  H ${k.h.toFixed(2)}  L ${k.l.toFixed(2)}  C ${k.c.toFixed(2)}`;
+      const t = `O ${fmt(k.o)}  H ${fmt(k.h)}  L ${fmt(k.l)}  C ${fmt(k.c)}`;
       if (t !== lastOHLC) ohlcEl.textContent = lastOHLC = t;
     }
 
@@ -393,8 +511,21 @@
       if (!running) return;
       const dt = Math.min(100, t - tLast);
       tLast = t;
-      if (intro < 1) {
+      if (mode === 'loading') {
+        // tunggu data; jangan mulai intro dulu
+      } else if (intro < 1) {
         intro = Math.min(1, intro + dt / 1500);
+      } else if (mode === 'live') {
+        // harga candle terakhir dihaluskan menuju nilai asli terbaru
+        const k = candles[candles.length - 1];
+        if (target && target.t === k.t) {
+          const prev = k.c;
+          k.c += (target.c - k.c) * Math.min(1, dt / 220);
+          k.h = Math.max(k.h, k.c);
+          k.l = Math.min(k.l, k.c);
+          k.v = target.v;
+          if (Math.abs(k.c - prev) > 1e-9) lastDir = k.c >= prev ? 1 : -1;
+        }
       } else {
         tickAcc += dt;
         candleAcc += dt;
@@ -411,7 +542,7 @@
         if (candleAcc > NEW) {
           candleAcc = 0;
           price = candles[candles.length - 1].c;
-          const c = { o: price, h: price, l: price, c: price, v: 10 };
+          const c = { t: candles.length, o: price, h: price, l: price, c: price, v: 10 };
           candles.push(c);
           if (candles.length > 400) candles.splice(0, candles.length - 400);
           shift = 1;
@@ -431,10 +562,27 @@
     resize();
     new ResizeObserver(resize).observe(canvas);
 
-    if (reduce) {
-      draw();
-      return;
-    }
+    // Ambil data asli; kalau gagal, pakai simulasi.
+    loadHistory().then((list) => {
+      if (list) {
+        candles.push(...list.slice(0, -1));
+        const live = list[list.length - 1];
+        candles.push({ ...live });
+        target = live;
+        mode = 'live';
+        source = src.name;
+        lastOk = Date.now();
+        setStatus(`BTC/USDT · 1m · ${source}`, '');
+        if (!reduce) setInterval(poll, 2000);
+      } else {
+        for (let i = 0; i < 160; i++) candles.push(makeCandle(i));
+        mode = 'sim';
+        setStatus('Ilustrasi · 1m', '');
+      }
+      if (reduce) draw();
+    });
+
+    if (reduce) return;
 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
