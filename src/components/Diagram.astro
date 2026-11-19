@@ -1,0 +1,477 @@
+---
+// Menggambar satu diagram dari src/data/diagrams.ts sebagai SVG.
+// Animasi (candle tumbuh, garis tergambar, bar memanjang) aktif saat elemen
+// pembungkus mendapat class "is-open" dari skrip halaman modul.
+import { diagrams, type CandleIn, type Tone } from '../data/diagrams';
+
+interface Props {
+  name: string;
+}
+const d = diagrams[Astro.props.name];
+if (!d) throw new Error(`Diagram "${Astro.props.name}" tidak ditemukan di src/data/diagrams.ts`);
+
+const W = 400;
+const H = 300;
+const X0 = 18;
+const X1 = 382;
+const Y0 = 22;
+const Y1 = 282;
+
+const toneVar = (t: Tone = 'ink') => `var(--d-${t})`;
+
+// ---------- chart ----------
+type C = { o: number; h: number; l: number; c: number };
+let candles: C[] = [];
+let yOf = (p: number) => p;
+let xOfCandle = (i: number) => i;
+let xOfSeries = (x: number) => x;
+let step = 0;
+
+if (d.type === 'chart') {
+  const raw = d.candles ?? [];
+  let prev = typeof raw[0] === 'number' ? (raw[0] as number) - 0.8 : 0;
+  candles = raw.map((r: CandleIn) => {
+    if (typeof r !== 'number') {
+      prev = r.c;
+      return r;
+    }
+    const o = prev;
+    const c = r;
+    const w = Math.abs(c - o) * 0.35 + 0.45;
+    prev = c;
+    return { o, c, h: Math.max(o, c) + w, l: Math.min(o, c) - w };
+  });
+  const ps: number[] = [];
+  candles.forEach((k) => ps.push(k.h, k.l));
+  d.series?.forEach((s) => s.points.forEach((pt) => ps.push(pt.p)));
+  d.lines?.forEach((l) => ps.push(l.p));
+  d.zones?.forEach((z) => ps.push(z.p1, z.p2));
+  const lo = Math.min(...ps);
+  const hi = Math.max(...ps);
+  const pad = (hi - lo) * 0.16;
+  const min = lo - pad;
+  const max = hi + pad;
+  yOf = (p: number) => Y1 - ((p - min) / (max - min)) * (Y1 - Y0);
+  const n = Math.max(1, candles.length);
+  step = (X1 - X0) / n;
+  xOfCandle = (i: number) => X0 + step * (i + 0.5);
+  const xMax = d.xMax ?? 1;
+  xOfSeries = (x: number) => X0 + 10 + (x / xMax) * (X1 - X0 - 20);
+}
+
+const anchorFor = (x: number) => (x < 70 ? 'start' : x > W - 70 ? 'end' : 'middle');
+const pathD = (pts: { x: number; y: number }[]) => pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+---
+
+<figure class="dg" data-type={d.type}>
+  <figcaption class="dg-title">{d.title}</figcaption>
+  <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={d.title}>
+    {
+      d.type === 'chart' && (
+        <>
+          {[0.25, 0.5, 0.75].map((f) => (
+            <line class="dg-grid" x1={X0} x2={X1} y1={Y0 + (Y1 - Y0) * f} y2={Y0 + (Y1 - Y0) * f} />
+          ))}
+          {d.zones?.map((z, i) => (
+            <g class="dg-z" style={`--i:${i}`}>
+              <rect
+                x={X0}
+                width={X1 - X0}
+                y={yOf(Math.max(z.p1, z.p2))}
+                height={Math.abs(yOf(z.p1) - yOf(z.p2))}
+                fill={toneVar(z.tone)}
+                fill-opacity="0.13"
+                stroke={toneVar(z.tone)}
+                stroke-opacity="0.35"
+                rx="3"
+              />
+              <text x={X1 - 6} y={yOf(Math.max(z.p1, z.p2)) + 13} text-anchor="end" fill={toneVar(z.tone)} class="dg-lab">
+                {z.label}
+              </text>
+            </g>
+          ))}
+          {candles.map((k, i) => {
+            const up = k.c >= k.o;
+            const col = up ? 'var(--d-up)' : 'var(--d-down)';
+            const x = xOfCandle(i);
+            const bw = Math.min(16, step * 0.56);
+            return (
+              <g class="dg-c" style={`--i:${i}`}>
+                <line x1={x} x2={x} y1={yOf(k.h)} y2={yOf(k.l)} stroke={col} stroke-width="1.6" />
+                <rect
+                  x={x - bw / 2}
+                  width={bw}
+                  y={yOf(Math.max(k.o, k.c))}
+                  height={Math.max(2, Math.abs(yOf(k.o) - yOf(k.c)))}
+                  fill={col}
+                  rx="1.5"
+                />
+              </g>
+            );
+          })}
+          {d.lines?.map((l, i) => (
+            <g class="dg-t" style={`--i:${i + 4}`}>
+              <line
+                class="dg-l"
+                x1={X0}
+                x2={X1}
+                y1={yOf(l.p)}
+                y2={yOf(l.p)}
+                stroke={toneVar(l.tone)}
+                stroke-width="1.6"
+                stroke-dasharray={l.dash ? '5 5' : undefined}
+                pathLength="1"
+              />
+              <text x={X0 + 4} y={yOf(l.p) - 6} fill={toneVar(l.tone)} class="dg-lab">
+                {l.label}
+              </text>
+            </g>
+          ))}
+          {d.series?.map((s, si) => {
+            const pts = s.points.map((pt) => ({ x: xOfSeries(pt.x), y: yOf(pt.p) }));
+            return (
+              <g>
+                <path class="dg-path" d={pathD(pts)} stroke={toneVar(s.tone)} pathLength="1" style={`--i:${si}`} />
+                {s.points.map((pt, pi) =>
+                  pt.label ? (
+                    <g class="dg-t" style={`--i:${pi + 3}`}>
+                      <circle cx={pts[pi].x} cy={pts[pi].y} r="3.5" fill={toneVar(s.tone)} />
+                      <text
+                        x={pts[pi].x}
+                        y={pt.pos === 'below' ? pts[pi].y + 18 : pts[pi].y - 10}
+                        text-anchor={anchorFor(pts[pi].x)}
+                        class="dg-lab strong"
+                        fill="var(--d-ink)"
+                      >
+                        {pt.label}
+                      </text>
+                    </g>
+                  ) : null,
+                )}
+              </g>
+            );
+          })}
+          {d.series && d.series.some((s) => s.label) && (
+            <g class="dg-t legend" style="--i:2">
+              {d.series
+                .filter((s) => s.label)
+                .map((s, i) => (
+                  <g transform={`translate(${X0 + 2} ${Y0 + 2 + i * 16})`}>
+                    <rect width="14" height="4" y="-3" rx="2" fill={toneVar(s.tone)} />
+                    <text x="20" y="1.5" class="dg-lab" fill="var(--d-muted)">
+                      {s.label}
+                    </text>
+                  </g>
+                ))}
+            </g>
+          )}
+          {d.marks?.map((m, i) => {
+            const k = candles[m.i];
+            const x = xOfCandle(m.i);
+            const below = m.pos === 'below';
+            return (
+              <g class="dg-t" style={`--i:${i + 6}`}>
+                <text
+                  x={x}
+                  y={below ? yOf(k.l) + 18 : yOf(k.h) - 10}
+                  text-anchor={anchorFor(x)}
+                  fill={toneVar(m.tone)}
+                  class="dg-lab strong"
+                >
+                  {m.label}
+                </text>
+              </g>
+            );
+          })}
+        </>
+      )
+    }
+
+    {
+      d.type === 'bars' &&
+        (() => {
+          const max = Math.max(...d.bars.map((b) => b.value));
+          const rowH = (Y1 - Y0) / d.bars.length;
+          return d.bars.map((b, i) => {
+            const y = Y0 + rowH * i;
+            const w = Math.max(4, (b.value / max) * (X1 - X0 - 4));
+            return (
+              <g class="dg-t" style={`--i:${i}`}>
+                <text x={X0} y={y + 16} class="dg-lab" fill="var(--d-ink)">
+                  {b.label}
+                </text>
+                <rect class="dg-b" style={`--i:${i}`} x={X0} y={y + 24} width={w} height="16" rx="4" fill={toneVar(b.tone)} />
+                <text
+                  x={w > 170 ? X0 + w - 8 : X0 + w + 8}
+                  y={y + 36.5}
+                  text-anchor={w > 170 ? 'end' : 'start'}
+                  class="dg-lab strong"
+                  fill={w > 170 ? '#fff' : toneVar(b.tone)}
+                >
+                  {b.display}
+                </text>
+              </g>
+            );
+          });
+        })()
+    }
+
+    {
+      d.type === 'book' &&
+        (() => {
+          const max = Math.max(...d.asks.map((a) => a[1]), ...d.bids.map((b) => b[1]));
+          const rowH = 27;
+          const row = (p: number, v: number, y: number, tone: Tone, i: number) => (
+            <g class="dg-t" style={`--i:${i}`}>
+              <text x={X0 + 6} y={y + 17} class="dg-mono" fill={toneVar(tone)}>
+                {p.toLocaleString('en-US')}
+              </text>
+              <rect class="dg-b" style={`--i:${i}`} x={150} y={y + 4} width={(v / max) * 210} height={rowH - 8} rx="3" fill={toneVar(tone)} fill-opacity="0.25" />
+              <text x={X1 - 4} y={y + 17} text-anchor="end" class="dg-mono" fill="var(--d-ink)">
+                {v.toFixed(1)} BTC
+              </text>
+            </g>
+          );
+          return (
+            <>
+              <text x={X0 + 6} y={Y0 + 4} class="dg-lab strong" fill="var(--d-down)">
+                Ask (penjual)
+              </text>
+              {d.asks.map((a, i) => row(a[0], a[1], Y0 + 10 + i * rowH, 'down', i))}
+              <g class="dg-t" style="--i:5">
+                <line x1={X0} x2={X1} y1={Y0 + 10 + 4 * rowH + 8} y2={Y0 + 10 + 4 * rowH + 8} stroke="var(--d-muted)" stroke-dasharray="3 4" />
+                <text x={W / 2} y={Y0 + 10 + 4 * rowH + 4} text-anchor="middle" class="dg-lab strong" fill="var(--d-accent)">
+                  Spread: {(d.asks[d.asks.length - 1][0] - d.bids[0][0]).toLocaleString('en-US')} USDT
+                </text>
+              </g>
+              {d.bids.map((b, i) => row(b[0], b[1], Y0 + 22 + 4 * rowH + i * rowH, 'up', i + 5))}
+              <text x={X0 + 6} y={H - 4} class="dg-lab strong" fill="var(--d-up)">
+                Bid (pembeli)
+              </text>
+            </>
+          );
+        })()
+    }
+
+    {
+      d.type === 'timeline' &&
+        (() => {
+          const n = d.events.length;
+          const xs = d.events.map((_, i) => X0 + 24 + (i * (X1 - X0 - 48)) / (n - 1));
+          return (
+            <>
+              <line class="dg-l" x1={xs[0]} x2={xs[n - 1]} y1="140" y2="140" stroke="var(--d-accent)" stroke-width="3" pathLength="1" />
+              {d.events.map((e, i) => (
+                <g class="dg-t" style={`--i:${i + 1}`} opacity={e.dim ? 0.55 : 1}>
+                  <circle cx={xs[i]} cy="140" r="9" fill={e.dim ? 'var(--d-paper)' : 'var(--d-accent)'} stroke="var(--d-accent)" stroke-width="2.5" />
+                  <text x={xs[i]} y="118" text-anchor="middle" class="dg-big" fill="var(--d-ink)">
+                    {e.t}
+                  </text>
+                  <text x={xs[i]} y="170" text-anchor="middle" class="dg-lab" fill="var(--d-muted)">
+                    {e.s}
+                  </text>
+                </g>
+              ))}
+              {d.note && (
+                <text x={W / 2} y="240" text-anchor="middle" class="dg-lab strong dg-t" style="--i:7" fill="var(--d-ink)">
+                  {d.note}
+                </text>
+              )}
+            </>
+          );
+        })()
+    }
+
+    {
+      d.type === 'table' &&
+        (() => {
+          const cols = (d.head ?? d.rows[0]).length;
+          const colX = cols === 3 ? [X0 + 4, 236, 312] : [X0 + 4, 150];
+          const rowH = Math.min(36, (Y1 - Y0) / (d.rows.length + (d.head ? 1 : 0)));
+          const startY = Y0 + (d.head ? rowH : 0);
+          return (
+            <>
+              {d.head && (
+                <g class="dg-t" style="--i:0">
+                  {d.head.map((h, ci) => (
+                    <text x={colX[ci]} y={Y0 + rowH * 0.62} class="dg-lab strong" fill="var(--d-muted)">
+                      {h.toUpperCase()}
+                    </text>
+                  ))}
+                </g>
+              )}
+              {d.rows.map((r, ri) => (
+                <g class="dg-t" style={`--i:${ri + 1}`}>
+                  <line x1={X0} x2={X1} y1={startY + ri * rowH} y2={startY + ri * rowH} class="dg-grid" />
+                  {r.map((cell, ci) =>
+                    typeof cell === 'string' ? (
+                      <text x={colX[ci]} y={startY + ri * rowH + rowH * 0.62} class={ci === 0 && cols === 2 ? 'dg-lab' : 'dg-lab strong'} fill={ci === 0 && cols === 2 ? 'var(--d-muted)' : 'var(--d-ink)'}>
+                        {cell}
+                      </text>
+                    ) : (
+                      <g>
+                        <rect x={colX[ci] - 6} y={startY + ri * rowH + rowH * 0.2} width={cell.text.length * 7.4 + 14} height={rowH * 0.6} rx="5" fill={toneVar(cell.tone)} fill-opacity="0.15" />
+                        <text x={colX[ci] + 1} y={startY + ri * rowH + rowH * 0.62} class="dg-lab strong" fill={toneVar(cell.tone)}>
+                          {cell.text}
+                        </text>
+                      </g>
+                    ),
+                  )}
+                </g>
+              ))}
+            </>
+          );
+        })()
+    }
+
+    {
+      d.type === 'anatomy' && (
+        <>
+          <g class="dg-c" style="--i:0">
+            <line x1="130" x2="130" y1="40" y2="262" stroke="var(--d-up)" stroke-width="3" />
+            <rect x="100" y="92" width="60" height="118" rx="4" fill="var(--d-up)" />
+          </g>
+          {[
+            { y: 40, t: 'High (tertinggi)' },
+            { y: 92, t: 'Close (penutupan)' },
+            { y: 210, t: 'Open (pembukaan)' },
+            { y: 262, t: 'Low (terendah)' },
+          ].map((a, i) => (
+            <g class="dg-t" style={`--i:${i + 2}`}>
+              <line class="dg-l" x1="166" x2="214" y1={a.y} y2={a.y} stroke="var(--d-muted)" stroke-dasharray="3 3" pathLength="1" />
+              <text x="220" y={a.y + 4} class="dg-lab strong" fill="var(--d-ink)">
+                {a.t}
+              </text>
+            </g>
+          ))}
+          <g class="dg-t" style="--i:6">
+            <text x="92" y="155" text-anchor="end" class="dg-lab strong" fill="var(--d-up)">
+              Body
+            </text>
+            <text x="122" y="66" text-anchor="end" class="dg-lab" fill="var(--d-muted)">
+              Wick
+            </text>
+            <text x="122" y="240" text-anchor="end" class="dg-lab" fill="var(--d-muted)">
+              Wick
+            </text>
+          </g>
+          <g class="dg-c" style="--i:7">
+            <line x1="352" x2="352" y1="150" y2="262" stroke="var(--d-down)" stroke-width="2" />
+            <rect x="338" y="166" width="28" height="70" rx="3" fill="var(--d-down)" />
+          </g>
+          <text class="dg-t dg-lab" style="--i:8" x="352" y="138" text-anchor="middle" fill="var(--d-down)">
+            Merah: close &lt; open
+          </text>
+        </>
+      )
+    }
+  </svg>
+</figure>
+
+<style>
+  .dg {
+    margin: 0;
+    width: 100%;
+    display: grid;
+    gap: 10px;
+  }
+  .dg-title {
+    font: 600 0.82rem/1.3 var(--font-mono);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--d-muted);
+  }
+  svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .dg-grid {
+    stroke: var(--d-grid);
+    stroke-width: 1;
+  }
+  .dg-lab,
+  .dg-mono,
+  .dg-big {
+    paint-order: stroke;
+    stroke: var(--d-paper);
+    stroke-width: 3.5px;
+    stroke-linejoin: round;
+  }
+  .dg-lab {
+    font: 500 11.5px var(--font-body);
+  }
+  .dg-lab.strong {
+    font-weight: 700;
+  }
+  .dg-mono {
+    font: 600 11.5px var(--font-mono);
+  }
+  @media (max-width: 640px) {
+    .dg-lab,
+    .dg-mono {
+      font-size: 14px;
+    }
+  }
+  .dg-big {
+    font: 700 17px var(--font-display);
+  }
+  .dg-path {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ---------- animasi (hanya saat JS aktif dan halaman terbuka) ---------- */
+  :global(.js-book) .dg-c {
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    transform: scaleY(0);
+    opacity: 0;
+    transition:
+      transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 0.3s;
+    transition-delay: calc(0.15s + var(--i) * 45ms);
+  }
+  :global(.js-book) .dg-t,
+  :global(.js-book) .dg-z {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    transition-delay: calc(0.45s + var(--i) * 90ms);
+  }
+  :global(.js-book) .dg-b {
+    transform-box: fill-box;
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition-delay: calc(0.3s + var(--i) * 110ms);
+  }
+  :global(.js-book) .dg-path,
+  :global(.js-book) .dg-l:not([stroke-dasharray]) {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 1.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition-delay: calc(0.2s + var(--i, 0) * 150ms);
+  }
+  :global(.is-open) .dg-c,
+  :global(.is-open) .dg-b {
+    transform: none;
+    opacity: 1;
+  }
+  :global(.is-open) .dg-t,
+  :global(.is-open) .dg-z {
+    opacity: 1;
+  }
+  :global(.is-open) .dg-path,
+  :global(.is-open) .dg-l:not([stroke-dasharray]) {
+    stroke-dashoffset: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js-book) .dg * {
+      transform: none !important;
+      opacity: 1 !important;
+      stroke-dashoffset: 0 !important;
+    }
+  }
+</style>

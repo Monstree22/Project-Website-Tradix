@@ -1,0 +1,27 @@
+---
+// Halaman kiri buku modul: diagram (kalau ada) + catatan penting dari "> kutipan".
+import Diagram from './Diagram.astro';
+import type { ModulPage } from '../lib/modul';
+interface Props {
+  page: ModulPage;
+  index: number;
+}
+const { page, index } = Astro.props;
+---
+
+<aside class="face back left-page" aria-label={`Catatan halaman ${index + 1}`}>
+  <header class="page-top">
+    <span>Catatan · {page.heading}</span>
+    <span>{index + 1}</span>
+  </header>
+  {page.visual && <Diagram name={page.visual} />}
+  {
+    page.note && (
+      <div class:list={['note', { solo: !page.visual }]}>
+        <span class="note-label">Ingat</span>
+        <p set:html={page.note.replace(/^<p>|<\/p>$/g, '')} />
+      </div>
+    )
+  }
+  {!page.visual && !page.note && <p class="big-head">{page.heading}</p>}
+</aside>

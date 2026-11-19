@@ -14,6 +14,7 @@ Dibangun dengan [Astro](https://astro.build) sebagai **situs statis**: hasil bui
 | `/tentang/mentorship/` | Cara kerja mentorship, mentor, format bimbingan |
 | `/tentang/eksekutif/` | Tim eksekutif & analis |
 | `/materi/` | Roadmap belajar 8 minggu, lengkap dengan sub-topik |
+| `/materi/minggu-1/` … `/materi/minggu-8/` | Modul belajar per minggu dengan animasi buka buku (Motion) |
 | `/performa/` | Screenshot PnL dengan status realized/unrealized + peringatan risiko |
 | `/event/` | Event mendatang (otomatis dari tanggal) + arsip |
 | `/faq/` | FAQ per kategori (+ structured data untuk Google) |
@@ -40,6 +41,8 @@ Semua konten ada di `src/data/`. Halaman otomatis mengikuti.
 | Founder / eksekutif / mentor | `src/data/team.ts` (+ foto di `public/images/team/`) |
 | Screenshot PnL | `src/data/performa.ts` (+ gambar di `public/images/pnl/`) |
 | Roadmap materi | `src/data/materi.ts` |
+| Isi modul buku per minggu | `src/content/modul/minggu-N.md` (aturan di `src/content/modul/README.md`) |
+| Diagram di modul | `src/data/diagrams.ts` |
 | FAQ | `src/data/faq.ts` |
 
 Siapkan gambar dengan `python3 scripts/prep-image.py` (butuh `pip install pillow`); jalankan tanpa argumen untuk melihat cara pakai.

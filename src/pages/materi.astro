@@ -20,7 +20,7 @@ const phases = [
   <PageHero
     eyebrow="Materi"
     title="Roadmap belajar trading 8 minggu"
-    lead="Satu topik setiap minggu, berurutan dari nol. Selesai minggu ke-8, kamu punya trading plan pribadi yang bisa diuji."
+    lead="Satu topik setiap minggu, berurutan dari nol. Buka modul tiap minggu untuk membaca materinya seperti buku. Selesai minggu ke-8, kamu punya trading plan pribadi yang bisa diuji."
     crumbs={[{ label: 'Materi', href: '/materi/' }]}
   >
     <div class="chips">{tracks.map((t) => <span class="chip">{t}</span>)}</div>
@@ -54,7 +54,11 @@ const phases = [
               <div class="wk-head">
                 <span class="wk-num mono">{String(w.week).padStart(2, '0')}</span>
                 <div>
-                  <h3>{w.title}</h3>
+                  <h3>
+                    <a class="wk-link" href={`/materi/minggu-${w.week}/`}>
+                      {w.title}
+                    </a>
+                  </h3>
                   <p>{w.summary}</p>
                 </div>
               </div>
@@ -66,6 +70,9 @@ const phases = [
                   </li>
                 ))}
               </ul>
+              <a class="btn btn--ghost open-mod" href={`/materi/minggu-${w.week}/`}>
+                <Icon name="book" /> Buka modul minggu {w.week}
+              </a>
             </li>
           ))
         }
@@ -163,6 +170,22 @@ const phases = [
   }
   .wk {
     transition: border-color 0.35s var(--ease);
+  }
+  .wk-link {
+    text-decoration: none;
+  }
+  .wk-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .open-mod {
+    justify-self: start;
+    min-height: 44px;
+    padding: 10px 18px;
+    font-size: 0.92rem;
+  }
+  .wk.reached .open-mod {
+    border-color: var(--accent);
   }
   .wk.reached {
     border-color: rgb(47 123 255 / 0.45);

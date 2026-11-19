@@ -14,6 +14,7 @@ The site is a static Astro build. Almost every content change is an edit to one 
 | Founder, eksekutif, mentor | `src/data/team.ts` | `public/images/team/` |
 | PnL screenshots (Performa page) | `src/data/performa.ts` | `public/images/pnl/` |
 | 8-week roadmap (Materi page) | `src/data/materi.ts` | — |
+| Module "books" (`/materi/minggu-N/`) | `src/content/modul/minggu-N.md` | diagrams in `src/data/diagrams.ts` |
 | FAQ (grouped) | `src/data/faq.ts` | — |
 
 Site copy is Indonesian, casual but clear ("kamu", not "Anda"). Match the tone of the entries already in the file you're editing.
@@ -55,6 +56,15 @@ This page exists to show results **honestly**, because the old site lost credibi
 
 - `faq.ts`: add `{ q, a }` to the right group. Answers are short (1–3 sentences) and never promise profit. The FAQ page also emits FAQ structured data automatically.
 - `materi.ts`: the 8 weeks are the official curriculum. Change titles or summaries only when the user says the syllabus changed. `topics` are sub-points, 3–5 per week.
+
+## Module books (`src/content/modul/`)
+
+Each week has a Markdown file rendered as a 3D book on desktop (scroll turns pages) and as unfolding pages on mobile. Read `src/content/modul/README.md` first. The rules that matter:
+
+- Every `## Heading` is **one book page**. Keep each page to roughly 80–140 words, because the desktop page has a fixed height. After editing, check that no page overflows (build, open `/materi/minggu-N/` at 1280×720, scroll through).
+- One `> quote` per page becomes the "Ingat" note on the left page. A second quote stays in the text.
+- `<!-- visual: name -->` puts a diagram on the left page. Names are the keys in `src/data/diagrams.ts`; a wrong name fails the build with a clear message. To add a diagram, add an entry there using one of the existing types (`chart`, `bars`, `book`, `timeline`, `table`, `anatomy`).
+- Content is education, not financial advice: no profit promises, and keep numbers checkable (for example, recovery after a 50% loss is +100%).
 
 ## Images
 
