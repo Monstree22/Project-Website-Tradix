@@ -56,5 +56,36 @@ const ogImage = new URL(image, Astro.site);
       <slot />
     </main>
     <Footer />
+    <script>
+      // Angka [data-count] (mis. "350+") naik dari 0 saat pertama terlihat.
+      // Tanpa JS atau dengan "kurangi animasi", angka langsung tampil apa adanya.
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const els = document.querySelectorAll<HTMLElement>('[data-count]');
+        const io = new IntersectionObserver((entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            io.unobserve(e.target);
+            const el = e.target as HTMLElement;
+            const m = (el.dataset.final ?? '').match(/^(\D*)([\d.,]+)(.*)$/);
+            if (!m) continue;
+            const [, pre, num, suf] = m;
+            const target = parseFloat(num.replace(/[.,]/g, ''));
+            const t0 = performance.now();
+            const dur = 1400;
+            const step = (t: number) => {
+              const p = Math.min(1, (t - t0) / dur);
+              const v = Math.round(target * (1 - Math.pow(1 - p, 3)));
+              el.textContent = pre + v.toLocaleString('id-ID') + suf;
+              if (p < 1) requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+          }
+        });
+        els.forEach((el) => {
+          el.dataset.final = el.textContent ?? '';
+          io.observe(el);
+        });
+      }
+    </script>
   </body>
 </html>

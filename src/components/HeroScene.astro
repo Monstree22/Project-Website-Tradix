@@ -1,0 +1,371 @@
+---
+// Latar hero beranda dengan efek parallax:
+//  - lapis belakang: grid + grafik candlestick yang "menggambar dirinya" saat dibuka
+//  - lapis koin: koin BTC/ETH/USDT/SOL/BNB melayang di beberapa kedalaman
+// Saat di-scroll, tiap lapis bergerak dengan kecepatan berbeda; di desktop koin juga
+// sedikit mengikuti mouse. Pengguna "kurangi animasi" melihat versi diam.
+// Ikon koin: paket open-source cryptocurrency-icons (CC0), lihat public/images/coins/SOURCE.txt.
+
+// Grafik dibuat sekali saat build dari random walk ber-seed (hasilnya selalu sama).
+let seed = 7;
+const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const W = 1440;
+const H = 420;
+const N = 36;
+const step = W / N;
+let price = 300;
+const candles = Array.from({ length: N }, (_, i) => {
+  const open = price;
+  const drift = 4.2 + Math.sin(i / 4) * 9; // tren naik dengan koreksi
+  const close = open - drift + (rand() - 0.45) * 26;
+  const high = Math.min(open, close) - rand() * 16;
+  const low = Math.max(open, close) + rand() * 16;
+  price = close;
+  return { x: i * step + step / 2, open, close, high, low, up: close < open };
+});
+const line = candles.map((c, i) => `${i ? 'L' : 'M'}${c.x.toFixed(1)} ${c.close.toFixed(1)}`).join(' ');
+
+type Coin = { id: string; label: string; size: number; layer: 'far' | 'near'; py: number; d: number; delay: number };
+const coins: Coin[] = [
+  { id: 'btc', label: 'Bitcoin', size: 96, layer: 'near', py: -0.32, d: 1, delay: 0 },
+  { id: 'eth', label: 'Ethereum', size: 66, layer: 'far', py: -0.12, d: 0.45, delay: 1.2 },
+  { id: 'usdt', label: 'Tether', size: 76, layer: 'near', py: -0.24, d: 0.8, delay: 0.6 },
+  { id: 'sol', label: 'Solana', size: 50, layer: 'far', py: -0.08, d: 0.35, delay: 2.1 },
+  { id: 'bnb', label: 'BNB', size: 58, layer: 'far', py: -0.16, d: 0.55, delay: 1.6 },
+];
+---
+
+<div class="scene" aria-hidden="true" data-scene>
+  <div class="layer chart-layer" style="--py: 0.28">
+    <svg class="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="hs-line" x1="0" x2="1">
+          <stop offset="0" stop-color="#2f7bff" stop-opacity="0.2"></stop>
+          <stop offset="0.6" stop-color="#5b9bff"></stop>
+          <stop offset="1" stop-color="#1fc77e"></stop>
+        </linearGradient>
+        <linearGradient id="hs-area" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#2f7bff" stop-opacity="0.22"></stop>
+          <stop offset="1" stop-color="#2f7bff" stop-opacity="0"></stop>
+        </linearGradient>
+      </defs>
+      <path class="area" d={`${line} L${W} ${H} L0 ${H} Z`} fill="url(#hs-area)"></path>
+      {
+        candles.map((c, i) => (
+          <g class:list={['candle', c.up ? 'up' : 'down']} style={`--i:${i}`}>
+            <line x1={c.x} x2={c.x} y1={c.high} y2={c.low} />
+            <rect x={c.x - step * 0.22} width={step * 0.44} y={Math.min(c.open, c.close)} height={Math.max(2, Math.abs(c.open - c.close))} rx="1.5" />
+          </g>
+        ))
+      }
+      <path class="trend" d={line} pathLength="1" stroke="url(#hs-line)"></path>
+    </svg>
+  </div>
+
+  {
+    coins.map((c) => (
+      <div class:list={['layer', 'coin-pos', `coin-${c.id}`, c.layer]} style={`--py:${c.py};--d:${c.d}`}>
+        <div class="coin-float" style={`--delay:${c.delay}s`}>
+          <div class="coin" style={`--s:${c.size}px`}>
+            <img src={`/images/coins/${c.id}.svg`} alt="" width={c.size} height={c.size} />
+          </div>
+        </div>
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .scene {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    --sy: 0;
+    --mx: 0;
+    --my: 0;
+  }
+  .layer {
+    position: absolute;
+    will-change: transform;
+    transform: translate3d(
+      calc(var(--mx) * var(--d, 0) * 26px),
+      calc(var(--sy) * var(--py, 0) * 1px + var(--my) * var(--d, 0) * 20px),
+      0
+    );
+  }
+
+  /* ---------- grafik ---------- */
+  .chart-layer {
+    inset: auto 0 0 0;
+    height: 62%;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  }
+  .chart {
+    width: 100%;
+    height: 100%;
+    opacity: 0.55;
+  }
+  .candle line {
+    stroke-width: 1.4;
+  }
+  .candle.up line,
+  .candle.up rect {
+    stroke: #1fc77e;
+    fill: rgb(31 199 126 / 0.55);
+  }
+  .candle.down line,
+  .candle.down rect {
+    stroke: #f2555f;
+    fill: rgb(242 85 95 / 0.5);
+  }
+  .candle {
+    opacity: 0;
+    animation: candle-in 0.5s ease-out forwards;
+    animation-delay: calc(0.4s + var(--i) * 45ms);
+  }
+  .trend {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    filter: drop-shadow(0 0 8px rgb(47 123 255 / 0.8));
+    animation: draw 2.6s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
+  }
+  .area {
+    opacity: 0;
+    animation: fade 1.2s ease-out 2.2s forwards;
+  }
+  @keyframes draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes candle-in {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fade {
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* ---------- koin ---------- */
+  .coin-pos {
+    left: var(--x);
+    top: var(--y);
+  }
+  .coin-float {
+    animation: bob 7s ease-in-out infinite;
+    animation-delay: calc(var(--delay) * -1);
+  }
+  .coin {
+    width: var(--s);
+    height: var(--s);
+    border-radius: 50%;
+    position: relative;
+    transform-style: preserve-3d;
+    animation:
+      coin-in 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both,
+      turn 9s ease-in-out infinite;
+    animation-delay: calc(0.6s + var(--delay) * 0.25s), calc(var(--delay) * -1);
+    /* tebal koin + cahaya */
+    box-shadow:
+      0 6px 0 -1px rgb(0 0 0 / 0.35),
+      0 22px 40px -12px rgb(0 0 0 / 0.75),
+      0 0 34px -6px rgb(91 155 255 / 0.45);
+  }
+  .coin img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 50%;
+  }
+  /* kilau di permukaan koin */
+  .coin::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 30% 25%, rgb(255 255 255 / 0.55), transparent 42%),
+      radial-gradient(circle at 70% 85%, rgb(0 0 0 / 0.28), transparent 50%);
+    box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.18);
+  }
+  .far .coin {
+    filter: blur(1.5px) saturate(0.85);
+    opacity: 0.7;
+  }
+  @keyframes bob {
+    0%,
+    100% {
+      translate: 0 0;
+    }
+    50% {
+      translate: 0 -14px;
+    }
+  }
+  @keyframes turn {
+    0%,
+    100% {
+      transform: perspective(500px) rotateY(-22deg) rotateZ(-6deg);
+    }
+    50% {
+      transform: perspective(500px) rotateY(22deg) rotateZ(6deg);
+    }
+  }
+  @keyframes coin-in {
+    from {
+      opacity: 0;
+      scale: 0.6;
+    }
+  }
+
+  /* posisi (desktop): koin mengisi ruang di sekitar teks dan poster */
+  .coin-btc {
+    --x: 47%;
+    --y: 18%;
+  }
+  .coin-eth {
+    --x: 90%;
+    --y: 13%;
+  }
+  .coin-usdt {
+    --x: 53%;
+    --y: 76%;
+  }
+  .coin-sol {
+    --x: 40%;
+    --y: 88%;
+  }
+  .coin-bnb {
+    --x: 95%;
+    --y: 60%;
+  }
+
+  @media (max-width: 1000px) {
+    .coin-btc {
+      --x: 80%;
+      --y: 7%;
+    }
+    .coin-eth {
+      --x: 4%;
+      --y: 60%;
+    }
+    .coin-usdt {
+      --x: 84%;
+      --y: 58%;
+    }
+    .coin-sol,
+    .coin-bnb {
+      display: none;
+    }
+    .chart-layer {
+      height: 40%;
+    }
+  }
+  @media (max-width: 640px) {
+    .coin {
+      width: calc(var(--s) * 0.62);
+      height: calc(var(--s) * 0.62);
+    }
+    .coin-btc {
+      --x: 72%;
+      --y: 55%;
+    }
+    .coin-eth {
+      display: none;
+    }
+    .coin-usdt {
+      --x: 82%;
+      --y: 66%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .candle,
+    .area {
+      opacity: 1;
+    }
+    .trend {
+      stroke-dashoffset: 0;
+    }
+    .layer {
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  // Parallax: scroll menggeser tiap lapis dengan kecepatan berbeda (--sy),
+  // mouse menggeser koin sedikit (--mx/--my, hanya perangkat dengan mouse).
+  const scene = document.querySelector<HTMLElement>('[data-scene]');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  if (scene && !reduce.matches) {
+    const hero = scene.parentElement!;
+    // Di HP parallax dibuat lebih halus supaya koin tidak naik menutupi teks.
+    const narrow = matchMedia('(max-width: 640px)');
+    let sy = 0;
+    let tx = 0, ty = 0, mx = 0, my = 0;
+    let visible = true;
+    let raf = 0;
+
+    const tick = () => {
+      raf = 0;
+      mx += (tx - mx) * 0.08;
+      my += (ty - my) * 0.08;
+      scene.style.setProperty('--sy', sy.toFixed(1));
+      scene.style.setProperty('--mx', mx.toFixed(3));
+      scene.style.setProperty('--my', my.toFixed(3));
+      if (Math.abs(tx - mx) > 0.001 || Math.abs(ty - my) > 0.001) request();
+    };
+    const request = () => {
+      if (!raf && visible) raf = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener(
+      'scroll',
+      () => {
+        sy = Math.min(window.scrollY, hero.offsetHeight) * (narrow.matches ? 0.35 : 1);
+        request();
+      },
+      { passive: true },
+    );
+
+    if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      hero.addEventListener('pointermove', (e) => {
+        const r = hero.getBoundingClientRect();
+        tx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+        ty = ((e.clientY - r.top) / r.height - 0.5) * 2;
+        request();
+      });
+      hero.addEventListener('pointerleave', () => {
+        tx = ty = 0;
+        request();
+      });
+    }
+
+    // Hentikan semua animasi saat hero tidak terlihat (hemat baterai).
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      scene.style.setProperty('--play', visible ? 'running' : 'paused');
+      scene.classList.toggle('paused', !visible);
+    }).observe(hero);
+  }
+</script>
+
+<style is:global>
+  [data-scene].paused * {
+    animation-play-state: paused !important;
+  }
+</style>
