@@ -3,19 +3,17 @@ import Base from '../../layouts/Base.astro';
 import PageHero from '../../components/PageHero.astro';
 import PersonCard from '../../components/PersonCard.astro';
 import CtaBand from '../../components/CtaBand.astro';
-import { team } from '../../data/team';
+import { founder, executives } from '../../data/team';
 
-const execs = team.filter((p) => p.group === 'eksekutif');
-const analysts = team.filter((p) => p.group === 'mentor');
 
 const duties = [
   { title: 'Founder', text: 'Arah komunitas, kurikulum dan kualitas materi.' },
-  { title: 'CEO', text: 'Operasional harian, jadwal event dan hubungan dengan partner.' },
-  { title: 'Tim analis', text: 'Market update, sharing analisa dan bedah chart member.' },
+  { title: 'Eksekutif', text: 'Market Outlook mingguan, sharing analisa dan bedah chart bersama member.' },
+  { title: 'Member', text: 'Belajar bareng, bertanya di grup dan berbagi setup untuk dibahas bersama.' },
 ];
 ---
 
-<Base title="Eksekutif" description="Tim eksekutif dan analis yang menjalankan Tradix Community setiap hari.">
+<Base title="Eksekutif" description="Tim eksekutif Tradix Community: Iqbal, Zean dan Koh, bersama founder Kenzo.">
   <PageHero
     eyebrow="Tentang · Eksekutif"
     title="Tim yang menjalankan Tradix setiap hari"
@@ -30,12 +28,13 @@ const duties = [
     <div class="wrap">
       <div class="section-head">
         <span class="eyebrow">Eksekutif</span>
-        <h2>Pimpinan Tradix Community</h2>
+        <h2>Tim eksekutif Tradix Community</h2>
+        <p class="lead">Tiga eksekutif yang menjalankan Tradix bersama founder {founder.name}.</p>
       </div>
       <div class="grid grid-3">
-        {execs.map((p) => <PersonCard person={p} />)}
-        {analysts.map((p) => <PersonCard person={p} />)}
+        {executives.map((p) => <PersonCard person={p} />)}
       </div>
+      <a class="link-arrow founder-link" href="/tentang/founder/">Kenali founder Tradix, {founder.name}</a>
     </div>
   </section>
 
@@ -62,6 +61,9 @@ const duties = [
 </Base>
 
 <style>
+  .founder-link {
+    margin-top: 24px;
+  }
   .duties {
     list-style: none;
     margin: 0;

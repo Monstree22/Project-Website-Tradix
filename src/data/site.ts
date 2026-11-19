@@ -28,7 +28,7 @@ export const nav: NavItem[] = [
       { label: 'Komunitas', href: '/tentang/komunitas/', desc: 'Siapa kami, cara belajar, partner' },
       { label: 'Founder', href: '/tentang/founder/', desc: 'Kenzo, pendiri Tradix' },
       { label: 'Mentorship', href: '/tentang/mentorship/', desc: 'Belajar dibimbing trader aktif' },
-      { label: 'Eksekutif', href: '/tentang/eksekutif/', desc: 'Tim yang menjalankan Tradix' },
+      { label: 'Eksekutif', href: '/tentang/eksekutif/', desc: 'Iqbal, Zean dan Koh' },
     ],
   },
   { label: 'Materi', href: '/materi/' },

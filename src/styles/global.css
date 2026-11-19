@@ -210,7 +210,8 @@ p {
 }
 @media (max-width: 640px) {
   .grid-2,
-  .grid-3 {
+  .grid-3,
+  .grid-4 {
     grid-template-columns: 1fr;
   }
 }

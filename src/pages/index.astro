@@ -136,17 +136,14 @@ const benefits = [
         <div class="section-head" style="margin:0">
           <span class="eyebrow">Tentang</span>
           <h2>Orang di balik Tradix</h2>
-          <p class="lead">Founder, eksekutif dan analis yang mengisi kelas, webinar dan meetup.</p>
+          <p class="lead">Founder dan tim eksekutif yang mengisi kelas, webinar dan meetup.</p>
         </div>
         <a class="link-arrow" href="/tentang/">Kenali komunitasnya <Icon name="arrow" /></a>
       </div>
-      <div class="grid grid-3">
+      <div class="grid grid-4">
         {
           team.map((p) => (
-            <PersonCard
-              person={p}
-              href={p.slug === 'kenzo' ? '/tentang/founder/' : p.group === 'mentor' ? '/tentang/mentorship/' : '/tentang/eksekutif/'}
-            />
+            <PersonCard person={p} href={p.group === 'founder' ? '/tentang/founder/' : '/tentang/eksekutif/'} />
           ))
         }
       </div>

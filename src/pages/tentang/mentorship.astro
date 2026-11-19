@@ -7,7 +7,8 @@ import CtaBand from '../../components/CtaBand.astro';
 import { team } from '../../data/team';
 import { site } from '../../data/site';
 
-const mentors = team.filter((p) => p.slug === 'kenzo' || p.group === 'mentor');
+// Mentor = founder + tim eksekutif (pembawa Market Outlook mingguan dan sesi teknikal).
+const mentors = team;
 
 const steps = [
   { title: 'Gabung grup gratis', text: 'Masuk WhatsApp Community Tradix dan perkenalkan diri: pengalaman, market dan target belajarmu.' },
@@ -118,7 +119,7 @@ const formats = [
   }
   @media (min-width: 1001px) {
     .mentors {
-      grid-template-columns: repeat(2, minmax(0, 380px));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
   .num {
