@@ -44,7 +44,7 @@ export const faqGroups = [
       },
       {
         q: 'Apakah hasil di halaman Performa bisa saya tiru?',
-        a: 'Tidak ada jaminan. Hasil tersebut memakai leverage tinggi (20x sampai 75x) dan hanya menampilkan posisi yang profit. Performa masa lalu tidak menjamin hasil di masa depan.',
+        a: 'Tidak ada jaminan. Hasil tersebut memakai leverage tinggi (20x sampai 75x) dan merupakan pilihan hasil yang dibagikan di komunitas, bukan rekap seluruh trading. Performa masa lalu tidak menjamin hasil di masa depan.',
       },
       {
         q: 'Apa hubungan Tradix dengan BingX?',

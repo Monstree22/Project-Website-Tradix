@@ -27,12 +27,14 @@ const wipe = (100 / maxLev).toLocaleString('id-ID', { maximumFractionDigits: 1 }
   <section class="section">
     <div class="wrap">
       <div class="disclaimer warn-top">
-        <strong>Baca dulu:</strong> Hasil di bawah memakai leverage {minLev}x sampai {maxLev}x. Pada leverage {maxLev}x, harga cukup
-        bergerak sekitar {wipe}% berlawanan untuk menghabiskan margin. {
+        <strong>Catatan risiko:</strong> {
           unrealized === 0
-            ? `Semua ${trades.length} posisi sudah ditutup (realized), tapi ini hanya posisi yang profit; posisi yang loss tidak ditampilkan di sini.`
-            : `Dari ${trades.length} posisi, ${realized} sudah ditutup (realized) dan ${unrealized} masih terbuka saat screenshot diambil (unrealized).`
-        } Performa masa lalu tidak menjamin hasil di masa depan.
+            ? `Semua posisi di bawah sudah ditutup (realized)`
+            : `${realized} dari ${trades.length} posisi sudah ditutup (realized), ${unrealized} masih terbuka saat screenshot diambil`
+        } dan memakai leverage {minLev}x sampai {maxLev}x. Ini adalah pilihan hasil yang dibagikan di komunitas, bukan rekap
+        seluruh riwayat trading. Di leverage {maxLev}x, harga yang bergerak sekitar {wipe}% ke arah berlawanan sudah cukup untuk
+        menghabiskan margin, jadi pelajari risk management dulu sebelum mencoba. Performa masa lalu tidak menjamin hasil di
+        masa depan.
       </div>
 
       <div class="grid grid-3 trades">
