@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import MarketTicker from '../components/MarketTicker.astro';
-import HeroScene from '../components/HeroScene.astro';
+import TerminalHero from '../components/TerminalHero.astro';
 import PersonCard from '../components/PersonCard.astro';
 import EventCard from '../components/EventCard.astro';
 import FaqList from '../components/FaqList.astro';
@@ -10,17 +10,9 @@ import CtaBand from '../components/CtaBand.astro';
 import { site, stats } from '../data/site';
 import { roadmap } from '../data/materi';
 import { team } from '../data/team';
-import { events, upcomingEvents, pastEvents, posterHeight } from '../data/events';
+import { upcomingEvents, pastEvents } from '../data/events';
 import { faqGroups } from '../data/faq';
 
-// Poster besar = event rutin terbaru (A4), dua kecil rasio 4:5. Kolom 1.78fr/1fr
-// membuat slot besar berasio ~A4 sehingga semua poster tampil utuh.
-const ev = (slug: string) => events.find((e) => e.slug === slug)!;
-const heroPosters = [
-  { src: ev('market-outlook-mingguan').poster, h: posterHeight.a4, href: '/event/#market-outlook-mingguan', label: 'Event: Market Outlook mingguan' },
-  { src: ev('meetup-trader-disiplin').poster, h: posterHeight['4/5'], href: '/event/#meetup-trader-disiplin', label: 'Event: Meetup Bogor' },
-  { src: '/images/events/bingx-partner.webp', h: posterHeight['4/5'], href: '/tentang/komunitas/', label: 'Tradix, official partner BingX' },
-];
 // Event mendatang dulu, lalu diisi event terbaru sampai 3 kartu.
 const latest = [...upcomingEvents, ...pastEvents.filter((e) => e.date)].slice(0, 3);
 const faqTeaser = faqGroups.flatMap((g) => g.items).slice(0, 4);
@@ -37,7 +29,7 @@ const benefits = [
 
 <Base>
   <section class="hero">
-    <HeroScene />
+    <TerminalHero />
     <div class="wrap hero-grid">
       <div class="hero-copy" data-enter>
         <span class="eyebrow">Official Partner BingX · Gratis</span>
@@ -64,24 +56,6 @@ const benefits = [
         </dl>
       </div>
 
-      <div class="hero-visual" data-enter>
-        {
-          heroPosters.map((e, i) => (
-            <a class:list={['hv', `hv-${i}`]} href={e.href} aria-label={e.label}>
-              <div class="frame">
-                <img
-                  src={e.src}
-                  alt=""
-                  width="900"
-                  height={e.h}
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                  fetchpriority={i === 0 ? 'high' : undefined}
-                />
-              </div>
-            </a>
-          ))
-        }
-      </div>
     </div>
   </section>
 
@@ -205,7 +179,7 @@ const benefits = [
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: 1.1fr 1fr;
+    grid-template-columns: minmax(0, 680px);
     gap: clamp(32px, 5vw, 72px);
     align-items: center;
   }
@@ -238,38 +212,6 @@ const benefits = [
   .hero-stats dt {
     font-size: 0.85rem;
     color: var(--muted);
-  }
-
-  .hero-visual {
-    display: grid;
-    grid-template-columns: 1.78fr 1fr;
-    gap: 14px;
-    align-items: start;
-  }
-  .hv {
-    display: block;
-    border-radius: var(--r-lg);
-    text-decoration: none;
-    transition: transform 0.25s var(--ease);
-  }
-  .hv:hover {
-    transform: translateY(-2px);
-  }
-  .hv .frame {
-    aspect-ratio: 4 / 5;
-    border-radius: var(--r-lg);
-    border: 1px solid var(--line-2);
-    box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.8);
-  }
-  .hv-0 {
-    grid-row: 1 / 3;
-  }
-  .hv-0 .frame {
-    aspect-ratio: auto;
-    height: 100%;
-  }
-  .hv-0 {
-    height: 100%;
   }
 
   .weeks {
@@ -306,9 +248,6 @@ const benefits = [
   @media (max-width: 1000px) {
     .hero-grid {
       grid-template-columns: 1fr;
-    }
-    .hero-visual {
-      max-width: 640px;
     }
     .weeks {
       grid-template-columns: repeat(2, minmax(0, 1fr));

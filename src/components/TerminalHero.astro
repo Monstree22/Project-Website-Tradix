@@ -1,0 +1,467 @@
+---
+// Latar hero bergaya terminal trading: grafik candlestick layar penuh yang terus bergerak.
+// - Saat dibuka: riwayat candle "diputar cepat" dari kiri ke kanan.
+// - Live: candle terakhir bergerak tiap ~100 ms, candle baru lahir tiap ~2,4 detik dan grafik bergeser.
+// - Scroll: grafik miring ke belakang (3D) dan memudar.
+// - Desktop: crosshair mengikuti mouse + angka OHLC.
+// Data adalah SIMULASI (diberi label "Ilustrasi"), bukan harga aset sungguhan.
+// Harga asli tetap ada di ticker TradingView di bawah hero.
+---
+
+<div class="terminal" aria-hidden="true" data-terminal>
+  <div class="tilt" data-tilt>
+    <canvas data-canvas></canvas>
+  </div>
+  <div class="shade"></div>
+  <div class="hud wrap">
+    <div class="hud-row">
+      <span class="live"><i></i> Ilustrasi · 1m</span>
+      <span class="ohlc mono" data-ohlc>O — H — L — C —</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .terminal {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    --sp: 0;
+  }
+  .tilt {
+    position: absolute;
+    inset: 0;
+    transform-origin: 50% 100%;
+    transform: perspective(1100px) rotateX(calc(var(--sp) * 38deg)) scale(calc(1 + var(--sp) * 0.12));
+    opacity: calc(1 - var(--sp) * 0.75);
+    will-change: transform, opacity;
+  }
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  /* bayangan supaya teks di kiri tetap mudah dibaca */
+  .shade {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, rgb(7 11 20 / 0.94) 0%, rgb(7 11 20 / 0.78) 34%, rgb(7 11 20 / 0.15) 66%, rgb(7 11 20 / 0) 80%),
+      linear-gradient(0deg, rgb(7 11 20 / 1) 0%, rgb(7 11 20 / 0) 22%),
+      linear-gradient(180deg, rgb(7 11 20 / 0.9) 0%, rgb(7 11 20 / 0) 18%);
+  }
+  .hud {
+    position: absolute;
+    top: calc(var(--header-h) + 18px);
+    left: 0;
+    right: 0;
+  }
+  .hud-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 18px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .live {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-pill);
+    background: rgb(15 23 38 / 0.7);
+    backdrop-filter: blur(6px);
+  }
+  .live i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--up);
+    box-shadow: 0 0 0 0 rgb(31 199 126 / 0.6);
+    animation: pulse 1.6s ease-out infinite;
+  }
+  .ohlc {
+    color: var(--ink-2);
+    font-size: 0.8rem;
+  }
+  @keyframes pulse {
+    to {
+      box-shadow: 0 0 0 8px rgb(31 199 126 / 0);
+    }
+  }
+  @media (max-width: 900px) {
+    .shade {
+      background:
+        linear-gradient(180deg, rgb(7 11 20 / 0.9) 0%, rgb(7 11 20 / 0.55) 30%, rgb(7 11 20 / 0.55) 60%, rgb(7 11 20 / 0.95) 100%);
+    }
+    .ohlc {
+      display: none;
+    }
+  }
+  /* HP: grafik jadi latar redup tanpa angka, teks tetap jadi fokus */
+  @media (max-width: 640px) {
+    canvas {
+      opacity: 0.42;
+    }
+    .hud {
+      display: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tilt {
+      transform: none;
+      opacity: 1;
+    }
+    .live i {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  type Candle = { o: number; h: number; l: number; c: number; v: number };
+
+  const root = document.querySelector<HTMLElement>('[data-terminal]');
+  if (root) start(root);
+
+  function start(root: HTMLElement) {
+    const hero = root.parentElement!;
+    const canvas = root.querySelector<HTMLCanvasElement>('[data-canvas]')!;
+    const ohlcEl = root.querySelector<HTMLElement>('[data-ohlc]')!;
+    const ctx = canvas.getContext('2d')!;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    // ---------- data simulasi ----------
+    let seed = 42;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const gauss = () => {
+      let u = 0, v = 0;
+      while (!u) u = rnd();
+      while (!v) v = rnd();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    };
+    let vol = 0.006;
+    let price = 100;
+    const candles: Candle[] = [];
+    const makeCandle = (i: number): Candle => {
+      const o = price;
+      let h = o, l = o, c = o;
+      for (let k = 0; k < 12; k++) {
+        vol = Math.min(0.014, Math.max(0.003, vol * (1 + gauss() * 0.12)));
+        const trend = Math.sin(i / 19) * 0.00035 + 0.0001;
+        c = c * (1 + trend + gauss() * vol);
+        h = Math.max(h, c);
+        l = Math.min(l, c);
+      }
+      price = c;
+      return { o, h, l, c, v: (0.4 + rnd()) * (Math.abs(c - o) / o) * 1e4 + 20 };
+    };
+    for (let i = 0; i < 160; i++) candles.push(makeCandle(i));
+
+    // ---------- ukuran ----------
+    let W = 0, H = 0, dpr = 1, cw = 14;
+    let compact = false; // HP: tanpa angka harga
+    const resize = () => {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = canvas.clientWidth;
+      H = canvas.clientHeight;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cw = W < 640 ? 13 : W < 1100 ? 16 : 19;
+      compact = W < 640;
+      draw();
+    };
+
+    // ---------- status animasi ----------
+    const AXIS_W = 74; // lebar sumbu harga kanan
+    let AXIS = AXIS_W;
+    let intro = reduce ? 1 : 0; // 0..1 putar cepat riwayat
+    let shift = 0; // geseran halus saat candle baru lahir (0..1)
+    let lo = 0, hi = 0, scaleReady = false;
+    let mouse: { x: number; y: number } | null = null;
+    let lastDir = 1;
+
+    const visibleCount = () => Math.ceil((W - AXIS) / cw) + 2;
+
+    function draw() {
+      if (!W) return;
+      ctx.clearRect(0, 0, W, H);
+      AXIS = compact ? 0 : AXIS_W;
+      const n = visibleCount();
+      const total = candles.length;
+      const shown = Math.max(1, Math.round(n * intro));
+      const startIdx = Math.max(0, total - n);
+      const vis = candles.slice(startIdx, startIdx + shown);
+
+      // skala Y dihaluskan supaya tidak melompat
+      let mn = Infinity, mx = -Infinity;
+      for (const k of candles.slice(startIdx)) {
+        mn = Math.min(mn, k.l);
+        mx = Math.max(mx, k.h);
+      }
+      const pad = (mx - mn) * 0.12;
+      if (!scaleReady) {
+        lo = mn - pad;
+        hi = mx + pad;
+        scaleReady = true;
+      } else {
+        lo += (mn - pad - lo) * 0.08;
+        hi += (mx + pad - hi) * 0.08;
+      }
+      const top = H * 0.16, bottom = H * 0.8;
+      const y = (p: number) => bottom - ((p - lo) / (hi - lo)) * (bottom - top);
+      const plotW = W - AXIS;
+      // candle terbaru di kanan; saat candle baru lahir semua bergeser halus ke kiri (shift 1 -> 0)
+      const xOf = (i: number) => plotW - 10 - cw / 2 - (n - 1 - i) * cw + shift * cw;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, plotW, H);
+      ctx.clip();
+
+      // grid
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(140,170,220,0.06)';
+      ctx.beginPath();
+      for (let gx = plotW - 10 - cw / 2 + shift * cw - (total % 8) * cw; gx > 0; gx -= cw * 8) {
+        ctx.moveTo(Math.round(gx) + 0.5, 0);
+        ctx.lineTo(Math.round(gx) + 0.5, H);
+      }
+      const steps = 6;
+      for (let s = 0; s <= steps; s++) {
+        const gy = Math.round(top + ((bottom - top) * s) / steps) + 0.5;
+        ctx.moveTo(0, gy);
+        ctx.lineTo(plotW, gy);
+      }
+      ctx.stroke();
+
+      // volume
+      const vmax = Math.max(...vis.map((k) => k.v), 1);
+      vis.forEach((k, i) => {
+        const x = xOf(i + (n - vis.length));
+        const vh = (k.v / vmax) * H * 0.1;
+        ctx.fillStyle = k.c >= k.o ? 'rgba(31,199,126,0.22)' : 'rgba(242,85,95,0.2)';
+        ctx.fillRect(x - cw * 0.32, H * 0.94 - vh, cw * 0.64, vh);
+      });
+
+      // area + garis rata-rata (MA 12) dengan glow
+      const ma: { x: number; y: number }[] = [];
+      vis.forEach((_, i) => {
+        const gi = startIdx + i;
+        const from = Math.max(0, gi - 11);
+        const arr = candles.slice(from, gi + 1);
+        const avg = arr.reduce((s, k) => s + k.c, 0) / arr.length;
+        ma.push({ x: xOf(i + (n - vis.length)), y: y(avg) });
+      });
+      if (ma.length > 1) {
+        const grad = ctx.createLinearGradient(0, top, 0, bottom);
+        grad.addColorStop(0, 'rgba(47,123,255,0.20)');
+        grad.addColorStop(1, 'rgba(47,123,255,0)');
+        ctx.beginPath();
+        ma.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+        ctx.lineTo(ma[ma.length - 1].x, bottom);
+        ctx.lineTo(ma[0].x, bottom);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.save();
+        ctx.shadowColor = 'rgba(91,155,255,0.9)';
+        ctx.shadowBlur = 14;
+        ctx.strokeStyle = '#5b9bff';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ma.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // candle
+      let hoverIdx = -1;
+      vis.forEach((k, i) => {
+        const x = xOf(i + (n - vis.length));
+        const up = k.c >= k.o;
+        const col = up ? '#1fc77e' : '#f2555f';
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(Math.round(x) + 0.5, y(k.h));
+        ctx.lineTo(Math.round(x) + 0.5, y(k.l));
+        ctx.stroke();
+        const bt = y(Math.max(k.o, k.c));
+        const bh = Math.max(1.5, Math.abs(y(k.o) - y(k.c)));
+        ctx.fillStyle = up ? 'rgba(31,199,126,0.85)' : 'rgba(242,85,95,0.85)';
+        ctx.fillRect(x - cw * 0.34, bt, cw * 0.68, bh);
+        if (mouse && Math.abs(mouse.x - x) <= cw / 2) hoverIdx = i;
+      });
+
+      ctx.restore();
+
+      // tanda harga terakhir
+      const last = vis[vis.length - 1];
+      if (last && intro >= 1) {
+        const ly = y(last.c);
+        const col = lastDir >= 0 ? '#1fc77e' : '#f2555f';
+        ctx.setLineDash([3, 4]);
+        ctx.strokeStyle = col;
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(0, Math.round(ly) + 0.5);
+        ctx.lineTo(plotW, Math.round(ly) + 0.5);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+        if (!compact) tag(plotW + 4, ly, last.c.toFixed(2), col, '#04120b');
+        // titik berdenyut di harga terakhir
+        const lx = xOf(n - 1);
+        const pulse = (performance.now() % 1400) / 1400;
+        ctx.beginPath();
+        ctx.arc(lx, ly, 4 + pulse * 14, 0, Math.PI * 2);
+        ctx.fillStyle = lastDir >= 0 ? `rgba(31,199,126,${0.35 * (1 - pulse)})` : `rgba(242,85,95,${0.35 * (1 - pulse)})`;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(lx, ly, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = col;
+        ctx.fill();
+      }
+
+      // label sumbu harga
+      if (!compact) {
+      ctx.font = '500 11px "JetBrains Mono", monospace';
+      ctx.fillStyle = 'rgba(160,175,200,0.55)';
+      ctx.textBaseline = 'middle';
+      for (let s = 0; s <= steps; s++) {
+        const gy = top + ((bottom - top) * s) / steps;
+        const p = hi - ((gy - top) / (bottom - top)) * (hi - lo);
+        if (last && Math.abs(gy - y(last.c)) < 12) continue;
+        ctx.fillText(p.toFixed(2), plotW + 10, gy);
+      }
+      }
+
+      // crosshair
+      if (mouse && mouse.x < plotW && intro >= 1) {
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = 'rgba(200,215,240,0.35)';
+        ctx.beginPath();
+        ctx.moveTo(Math.round(mouse.x) + 0.5, 0);
+        ctx.lineTo(Math.round(mouse.x) + 0.5, H);
+        ctx.moveTo(0, Math.round(mouse.y) + 0.5);
+        ctx.lineTo(plotW, Math.round(mouse.y) + 0.5);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        const p = hi - ((mouse.y - top) / (bottom - top)) * (hi - lo);
+        tag(plotW + 4, mouse.y, p.toFixed(2), '#2a3a56', '#eef2f8');
+        const k = vis[hoverIdx];
+        if (k) setOHLC(k);
+      } else if (last) {
+        setOHLC(last);
+      }
+    }
+
+    function tag(x: number, yy: number, text: string, bg: string, fg: string) {
+      ctx.font = '600 11px "JetBrains Mono", monospace';
+      const w = AXIS - 8;
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.roundRect(x, yy - 10, w, 20, 4);
+      ctx.fill();
+      ctx.fillStyle = fg;
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, x + 6, yy + 0.5);
+    }
+
+    let lastOHLC = '';
+    function setOHLC(k: Candle) {
+      const t = `O ${k.o.toFixed(2)}  H ${k.h.toFixed(2)}  L ${k.l.toFixed(2)}  C ${k.c.toFixed(2)}`;
+      if (t !== lastOHLC) ohlcEl.textContent = lastOHLC = t;
+    }
+
+    // ---------- loop ----------
+    let running = true;
+    let tLast = performance.now();
+    let tickAcc = 0, candleAcc = 0;
+    const TICK = 110, NEW = 2400;
+
+    function frame(t: number) {
+      if (!running) return;
+      const dt = Math.min(100, t - tLast);
+      tLast = t;
+      if (intro < 1) {
+        intro = Math.min(1, intro + dt / 1500);
+      } else {
+        tickAcc += dt;
+        candleAcc += dt;
+        while (tickAcc > TICK) {
+          tickAcc -= TICK;
+          const k = candles[candles.length - 1];
+          const prev = k.c;
+          k.c = k.c * (1 + gauss() * vol * 0.5 + 0.00006);
+          k.h = Math.max(k.h, k.c);
+          k.l = Math.min(k.l, k.c);
+          k.v += rnd() * 6;
+          lastDir = k.c >= prev ? 1 : -1;
+        }
+        if (candleAcc > NEW) {
+          candleAcc = 0;
+          price = candles[candles.length - 1].c;
+          const c = { o: price, h: price, l: price, c: price, v: 10 };
+          candles.push(c);
+          if (candles.length > 400) candles.splice(0, candles.length - 400);
+          shift = 1;
+        }
+        shift = Math.max(0, shift - dt / 450);
+      }
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- scroll: grafik miring ke belakang ----------
+    const onScroll = () => {
+      const p = Math.min(1, Math.max(0, window.scrollY / (hero.offsetHeight * 0.9)));
+      root.style.setProperty('--sp', p.toFixed(3));
+    };
+
+    resize();
+    new ResizeObserver(resize).observe(canvas);
+
+    if (reduce) {
+      draw();
+      return;
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    if (finePointer) {
+      hero.addEventListener('pointermove', (e) => {
+        const r = canvas.getBoundingClientRect();
+        mouse = { x: e.clientX - r.left, y: e.clientY - r.top };
+      });
+      hero.addEventListener('pointerleave', () => (mouse = null));
+    }
+
+    // hemat baterai: berhenti saat hero tidak terlihat atau tab disembunyikan
+    const setRunning = (on: boolean) => {
+      if (on && !running) {
+        running = true;
+        tLast = performance.now();
+        requestAnimationFrame(frame);
+      } else if (!on) running = false;
+    };
+    let inView = true;
+    new IntersectionObserver(([e]) => {
+      inView = e.isIntersecting;
+      setRunning(inView && !document.hidden);
+    }).observe(hero);
+    document.addEventListener('visibilitychange', () => setRunning(inView && !document.hidden));
+
+    requestAnimationFrame(frame);
+  }
+</script>
