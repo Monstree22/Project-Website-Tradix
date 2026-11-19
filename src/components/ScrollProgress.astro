@@ -1,0 +1,75 @@
+---
+// Progres roadmap mengikuti scroll.
+// Pakai di elemen pembungkus: data-progress
+//   - anak dengan data-step  -> dapat class "reached" saat garis pemicu (58% tinggi layar) melewatinya
+//   - anak dengan data-progress-label -> teks "Minggu X dari N"
+//   - CSS variable --p (0..1) di pembungkus -> untuk mengisi garis/bar progres
+//   - data-progress-mode="index": progres dihitung dari seluruh pembungkus dan step menyala
+//     berurutan (cocok untuk grid berbaris, mis. 4 kartu sejajar di desktop)
+// Konten selalu terlihat penuh; yang berubah hanya aksen warna. Tanpa JS, semua tampil normal.
+---
+
+<script>
+  const groups = [...document.querySelectorAll<HTMLElement>('[data-progress]')];
+  if (groups.length) {
+    const TRIGGER = 0.58;
+    const active = new Set<HTMLElement>();
+    let raf = 0;
+
+    const update = () => {
+      raf = 0;
+      const line = window.innerHeight * TRIGGER;
+      for (const g of active) {
+        const steps = [...g.querySelectorAll<HTMLElement>('[data-step]')];
+        if (!steps.length) continue;
+        let p = 0;
+        let reached = 0;
+        if (g.dataset.progressMode === 'index') {
+          // mulai saat pembungkus masuk dari bawah (85% layar), selesai saat ujung bawahnya di 55% layar
+          const r = g.getBoundingClientRect();
+          const vh = window.innerHeight;
+          p = Math.min(1, Math.max(0, (vh * 0.85 - r.top) / Math.max(1, vh * 0.3 + r.height)));
+          reached = p > 0 ? Math.min(steps.length, Math.floor(p * steps.length) + 1) : 0;
+          if (p >= 1) reached = steps.length;
+          steps.forEach((s, i) => s.classList.toggle('reached', i < reached));
+        } else {
+          const first = steps[0].getBoundingClientRect();
+          const last = steps[steps.length - 1].getBoundingClientRect();
+          const start = first.top + first.height * 0.25;
+          const end = last.top + last.height * 0.25;
+          p = Math.min(1, Math.max(0, (line - start) / Math.max(1, end - start)));
+          // garis vertikal berhenti tepat di titik step terakhir (data-dot-y = jarak titik dari atas step)
+          const dotY = Number(g.dataset.dotY ?? 37);
+          g.style.setProperty('--rail-end', `${g.getBoundingClientRect().bottom - (last.top + dotY)}px`);
+          steps.forEach((s) => {
+            const r = s.getBoundingClientRect();
+            const on = r.top + r.height * 0.25 <= line;
+            s.classList.toggle('reached', on);
+            if (on) reached++;
+          });
+        }
+        g.style.setProperty('--p', p.toFixed(4));
+        g.dataset.reached = String(reached);
+        const label = g.querySelector<HTMLElement>('[data-progress-label]');
+        if (label) label.textContent = reached ? `Minggu ${reached} dari ${steps.length}` : `Mulai dari Minggu 1`;
+      }
+    };
+    const request = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) active.add(e.target as HTMLElement);
+        else active.delete(e.target as HTMLElement);
+      }
+      request();
+    });
+    groups.forEach((g) => io.observe(g));
+    window.addEventListener('scroll', request, { passive: true });
+    window.addEventListener('resize', request);
+    // Hitung sekali di awal (mis. saat halaman dibuka lewat #minggu-5).
+    groups.forEach((g) => active.add(g));
+    update();
+  }
+</script>

@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import PageHero from '../components/PageHero.astro';
 import Icon from '../components/Icon.astro';
 import CtaBand from '../components/CtaBand.astro';
+import ScrollProgress from '../components/ScrollProgress.astro';
 import { roadmap, tracks } from '../data/materi';
 
 const phases = [
@@ -46,10 +47,10 @@ const phases = [
         }
       </aside>
 
-      <ol class="timeline">
+      <ol class="timeline" data-progress data-dot-y="37">
         {
           roadmap.map((w) => (
-            <li id={`minggu-${w.week}`} class="card wk">
+            <li id={`minggu-${w.week}`} class="card wk" data-step>
               <div class="wk-head">
                 <span class="wk-num mono">{String(w.week).padStart(2, '0')}</span>
                 <div>
@@ -72,6 +73,7 @@ const phases = [
     </div>
   </section>
 
+  <ScrollProgress />
   <CtaBand title="Mulai Minggu 1 bersama member lain" text="Materi dibahas di grup WhatsApp dan webinar. Gabung gratis, mulai dari Basic Trading." />
 </Base>
 
@@ -112,11 +114,69 @@ const phases = [
     border-color: var(--accent-2);
   }
   .timeline {
+    position: relative;
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 0 0 0 44px;
     display: grid;
     gap: 16px;
+  }
+  /* garis progres vertikal yang terisi saat di-scroll */
+  .timeline::before,
+  .timeline::after {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 37px;
+    width: 3px;
+    border-radius: 2px;
+  }
+  .timeline::before {
+    bottom: var(--rail-end, 120px);
+    background: var(--line-2);
+  }
+  .timeline::after {
+    height: calc((100% - 37px - var(--rail-end, 120px)) * var(--p, 0));
+    background: linear-gradient(180deg, var(--accent), #1fc77e);
+    box-shadow: 0 0 14px rgb(47 123 255 / 0.7);
+  }
+  /* titik per minggu di garis */
+  .wk::before {
+    content: '';
+    position: absolute;
+    left: -38px;
+    top: 30px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--line-2);
+    transition:
+      background-color 0.35s var(--ease),
+      border-color 0.35s var(--ease),
+      box-shadow 0.35s var(--ease);
+  }
+  .wk.reached::before {
+    background: var(--accent);
+    border-color: var(--accent-2);
+    box-shadow: 0 0 0 5px rgb(47 123 255 / 0.18), 0 0 16px rgb(47 123 255 / 0.8);
+  }
+  .wk {
+    transition: border-color 0.35s var(--ease);
+  }
+  .wk.reached {
+    border-color: rgb(47 123 255 / 0.45);
+  }
+  .wk-num {
+    transition:
+      color 0.35s var(--ease),
+      text-shadow 0.35s var(--ease);
+  }
+  .wk:not(.reached) .wk-num {
+    color: var(--muted);
+  }
+  .wk.reached .wk-num {
+    text-shadow: 0 0 18px rgb(91 155 255 / 0.6);
   }
   .wk {
     gap: 20px;

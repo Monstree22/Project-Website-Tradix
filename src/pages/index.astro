@@ -7,6 +7,7 @@ import PersonCard from '../components/PersonCard.astro';
 import EventCard from '../components/EventCard.astro';
 import FaqList from '../components/FaqList.astro';
 import CtaBand from '../components/CtaBand.astro';
+import ScrollProgress from '../components/ScrollProgress.astro';
 import { site, stats } from '../data/site';
 import { roadmap } from '../data/materi';
 import { team } from '../data/team';
@@ -94,10 +95,18 @@ const benefits = [
         </div>
         <a class="link-arrow" href="/materi/">Lihat silabus lengkap <Icon name="arrow" /></a>
       </div>
+      <div class="road" data-progress data-progress-mode="index">
+      <div class="track" aria-hidden="true">
+        <div class="track-bar">
+          <span class="track-fill"></span>
+          {roadmap.map((w) => <span class="tick" style={`--i:${w.week - 1}`}></span>)}
+        </div>
+        <span class="track-label mono" data-progress-label>Mulai dari Minggu 1</span>
+      </div>
       <ol class="weeks">
         {
           roadmap.map((w) => (
-            <li>
+            <li data-step>
               <a class="card week" href={`/materi/#minggu-${w.week}`}>
                 <span class="wk mono">Minggu {String(w.week).padStart(2, '0')}</span>
                 <h3>{w.title}</h3>
@@ -107,6 +116,7 @@ const benefits = [
           ))
         }
       </ol>
+      </div>
     </div>
   </section>
 
@@ -159,6 +169,7 @@ const benefits = [
   </section>
 
   <CtaBand />
+  <ScrollProgress />
 </Base>
 
 <style>
@@ -225,6 +236,95 @@ const benefits = [
   .week {
     height: 100%;
     gap: 10px;
+    transition:
+      transform 0.2s var(--ease),
+      border-color 0.4s var(--ease),
+      box-shadow 0.4s var(--ease);
+  }
+  .reached .week {
+    border-color: var(--accent);
+    box-shadow:
+      0 0 0 1px var(--accent),
+      0 18px 40px -24px rgb(47 123 255 / 0.55);
+  }
+  .wk {
+    transition:
+      background-color 0.4s var(--ease),
+      color 0.4s var(--ease);
+  }
+  .reached .wk {
+    justify-self: start;
+    color: #fff;
+    background: var(--accent);
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin: -3px 0 -3px -8px;
+  }
+
+  /* bar progres yang menempel di atas saat kartu di-scroll */
+  .track {
+    position: sticky;
+    top: calc(var(--header-h) + 10px);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    border-radius: var(--r-pill);
+    background: rgb(243 245 249 / 0.97);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--paper-line);
+    box-shadow: 0 10px 24px -14px rgb(11 18 32 / 0.35);
+  }
+  .track-bar {
+    position: relative;
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--paper-line);
+  }
+  .track-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    /* minggu ke-k menyala tepat saat isian mencapai titik ke-k */
+    width: calc(min(1, var(--p, 0) * 8 / 7) * 100%);
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent), #1fc77e);
+    box-shadow: 0 0 12px rgb(47 123 255 / 0.5);
+  }
+  .tick {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--i) / 7 * 100%);
+    width: 12px;
+    height: 12px;
+    margin: -6px 0 0 -6px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--paper-line);
+    transition:
+      border-color 0.3s,
+      background-color 0.3s;
+  }
+  .road[data-reached='1'] .tick:nth-of-type(-n + 2),
+  .road[data-reached='2'] .tick:nth-of-type(-n + 3),
+  .road[data-reached='3'] .tick:nth-of-type(-n + 4),
+  .road[data-reached='4'] .tick:nth-of-type(-n + 5),
+  .road[data-reached='5'] .tick:nth-of-type(-n + 6),
+  .road[data-reached='6'] .tick:nth-of-type(-n + 7),
+  .road[data-reached='7'] .tick:nth-of-type(-n + 8),
+  .road[data-reached='8'] .tick {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .track-label {
+    min-width: 13ch;
+    text-align: right;
+    font-size: 0.82rem;
+    color: var(--accent);
+    font-weight: 500;
   }
   .week h3 {
     color: var(--paper-ink);
