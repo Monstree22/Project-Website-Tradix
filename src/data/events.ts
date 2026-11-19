@@ -1,6 +1,8 @@
 // Daftar event. Data diambil dari poster resmi.
 // Event baru: tambahkan objek di paling atas, isi `date` format YYYY-MM-DD.
 // Event dengan tanggal >= hari ini otomatis tampil di bagian "Event mendatang" saat build.
+// Event rutin (mis. mingguan) tidak pakai `date`, isi `recurring` (mis. 'Setiap minggu'): selalu tampil sebagai mendatang.
+// posterRatio: '1/1' persegi, '4/5' portrait Instagram, 'a4' portrait A4 (rasio ~0,71).
 // Alamat: cukup nama tempat + kelurahan/kota (tanpa nomor rumah).
 
 export type TradixEvent = {
@@ -8,17 +10,36 @@ export type TradixEvent = {
   title: string;
   type: 'Webinar' | 'Meetup' | 'Seminar' | 'Talkshow' | 'Partnership';
   date?: string; // YYYY-MM-DD
+  recurring?: string; // event rutin, mis. 'Setiap minggu'
   time?: string;
   place: string;
   city?: string;
   poster: string;
-  posterRatio: '1/1' | '4/5';
+  posterRatio: '1/1' | '4/5' | 'a4';
   speakers: { name: string; role: string }[];
   partners?: string[];
   registerUrl?: string;
 };
 
 export const events: TradixEvent[] = [
+  {
+    slug: 'market-outlook-mingguan',
+    title: 'Market Outlook Crypto & Forex',
+    type: 'Webinar',
+    recurring: 'Setiap minggu',
+    time: '20.00 WIB',
+    place: 'Google Meet',
+    city: 'Online',
+    poster: '/images/events/market-outlook-mingguan.webp',
+    posterRatio: 'a4',
+    speakers: [
+      { name: 'Iqbal', role: 'Eksekutif Tradix' },
+      { name: 'Zean', role: 'Eksekutif Tradix' },
+      { name: 'Koh', role: 'Eksekutif Tradix' },
+    ],
+    partners: ['BingX'],
+    registerUrl: 'https://bit.ly/tradix',
+  },
   {
     slug: 'bgb-builder-bogor',
     title: 'Forex & Crypto Trading Strategies: From Fundamental to Technical Analysis',
@@ -100,10 +121,13 @@ export const events: TradixEvent[] = [
 ];
 
 const today = new Date().toISOString().slice(0, 10);
+const isUpcoming = (e: TradixEvent) => !!e.recurring || (!!e.date && e.date >= today);
+// Event rutin tampil paling depan, lalu event bertanggal dari yang terdekat.
 export const upcomingEvents = events
-  .filter((e) => e.date && e.date >= today)
-  .sort((a, b) => a.date!.localeCompare(b.date!));
-export const pastEvents = events.filter((e) => !e.date || e.date < today);
+  .filter(isUpcoming)
+  .sort((a, b) => (a.recurring ? -1 : b.recurring ? 1 : a.date!.localeCompare(b.date!)));
+export const pastEvents = events.filter((e) => !isUpcoming(e));
+export const posterHeight = { '1/1': 900, '4/5': 1125, a4: 1273 } as const;
 
 export function formatDate(iso?: string) {
   if (!iso) return '';

@@ -30,10 +30,11 @@ Site copy is Indonesian, casual but clear ("kamu", not "Anda"). Match the tone o
 
 - Put the new event **at the top** of the `events` array.
 - `date` is `YYYY-MM-DD`. Any event dated today or later appears automatically under "Event berikutnya" on `/event/` and as "Event mendatang" on the home page at build time. Past events move to the archive by themselves. So after an event date passes, the site only reorganises if it is **rebuilt**. Mention this if the user expects it to change on its own.
-- `posterRatio` must match the real poster (`'1/1'` square or `'4/5'` portrait); `prep-image.py` prints the ratio. A wrong value distorts the card's reserved space.
+- **Recurring events** (weekly webinars and the like) have no `date`. Set `recurring` instead, e.g. `'Setiap minggu'`. They always count as upcoming and are listed first. When exactly one event is upcoming, `/event/` shows it as a wide featured card.
+- `posterRatio` must match the real poster: `'1/1'` square, `'4/5'` Instagram portrait, or `'a4'` (ratio about 0.71). `prep-image.py` prints the ratio. A wrong value distorts the card's reserved space.
 - `place`: venue name plus district/city only, e.g. `'Agreya Coffee, Tanah Baru'`. Drop street numbers. Posters often include a full address, but the site deliberately keeps it short.
 - `speakers`: copy names and roles exactly as written on the poster. The founder page lists every event where `name === 'Kenzo'`, so keep his name spelled the same.
-- `registerUrl` is optional. Only set it if the user gives a real link.
+- `registerUrl` is optional. Set it only from a real link (the user's message or the poster itself); it renders a "Daftar sekarang" button.
 
 ## Team (`team.ts`)
 

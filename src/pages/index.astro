@@ -9,14 +9,15 @@ import CtaBand from '../components/CtaBand.astro';
 import { site, stats } from '../data/site';
 import { roadmap } from '../data/materi';
 import { team } from '../data/team';
-import { events, upcomingEvents } from '../data/events';
+import { events, upcomingEvents, pastEvents } from '../data/events';
 import { faqGroups } from '../data/faq';
 
 // Poster rasio 4:5 supaya tampil utuh (tidak terpotong) di grid hero.
 const heroPosters = ['webinar-paham-makro', 'meetup-trader-disiplin', 'trivtalks-bekasi'].map(
   (slug) => events.find((e) => e.slug === slug)!,
 );
-const latest = (upcomingEvents.length ? upcomingEvents : events.filter((e) => e.date)).slice(0, 3);
+// Event mendatang dulu, lalu diisi event terbaru sampai 3 kartu.
+const latest = [...upcomingEvents, ...pastEvents.filter((e) => e.date)].slice(0, 3);
 const faqTeaser = faqGroups.flatMap((g) => g.items).slice(0, 4);
 
 const benefits = [
@@ -157,7 +158,7 @@ const benefits = [
       <div class="section-head section-head--split">
         <div class="section-head" style="margin:0">
           <span class="eyebrow">Event</span>
-          <h2>{upcomingEvents.length ? 'Event mendatang' : 'Event terbaru Tradix'}</h2>
+          <h2>{upcomingEvents.length ? 'Event mendatang & terbaru' : 'Event terbaru Tradix'}</h2>
           <p class="lead">Webinar online dan meetup offline bersama partner komunitas.</p>
         </div>
         <a class="link-arrow" href="/event/">Semua event <Icon name="arrow" /></a>

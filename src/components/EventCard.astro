@@ -1,27 +1,40 @@
 ---
 import Icon from './Icon.astro';
-import { formatDate, type TradixEvent } from '../data/events';
+import { formatDate, posterHeight, type TradixEvent } from '../data/events';
 interface Props {
   event: TradixEvent;
   compact?: boolean;
+  featured?: boolean;
 }
-const { event, compact = false } = Astro.props;
+const { event, compact = false, featured = false } = Astro.props;
 ---
 
-<article class="event card" id={event.slug}>
+<article class:list={['event card', { featured }]} id={event.slug}>
   <div class="frame poster">
     <img
       src={event.poster}
       alt={`Poster ${event.type}: ${event.title}`}
       width="900"
-      height={event.posterRatio === '1/1' ? 900 : 1125}
+      height={posterHeight[event.posterRatio]}
       loading="lazy"
     />
   </div>
   <div class="body">
-    <span class="badge badge--neutral">{event.type}{event.city ? ` · ${event.city}` : ''}</span>
+    <div class="chips">
+      <span class="badge badge--neutral">{event.type}{event.city ? ` · ${event.city}` : ''}</span>
+      {event.recurring && <span class="badge badge--up">Rutin</span>}
+    </div>
     <h3>{event.title}</h3>
     <ul class="facts">
+      {
+        event.recurring && (
+          <li>
+            <Icon name="calendar" />
+            {event.recurring}
+            {event.time ? `, ${event.time}` : ''}
+          </li>
+        )
+      }
       {
         event.date && (
           <li>
@@ -33,6 +46,13 @@ const { event, compact = false } = Astro.props;
       }
       <li><Icon name="pin" />{event.place}</li>
     </ul>
+    {
+      event.registerUrl && (
+        <a class="btn btn--primary register" href={event.registerUrl} target="_blank" rel="noopener">
+          Daftar sekarang <Icon name="arrow" />
+        </a>
+      )
+    }
     {
       !compact && event.speakers.length > 0 && (
         <div class="speakers">
@@ -71,6 +91,34 @@ const { event, compact = false } = Astro.props;
   }
   .body h3 {
     font-size: 1.15rem;
+  }
+  .featured {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+    gap: clamp(20px, 3vw, 40px);
+    align-items: center;
+  }
+  .featured .body {
+    padding: 12px 12px 12px 0;
+    gap: 16px;
+  }
+  .featured h3 {
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+  }
+  .featured .facts {
+    font-size: 1rem;
+  }
+  @media (max-width: 760px) {
+    .featured {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .featured .body {
+      padding: 18px 10px 10px;
+    }
+  }
+  .register {
+    justify-self: start;
+    margin-top: 4px;
   }
   .facts {
     list-style: none;

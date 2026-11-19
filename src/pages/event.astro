@@ -27,11 +27,17 @@ import { site } from '../data/site';
       </div>
       {
         upcomingEvents.length > 0 ? (
-          <div class="grid grid-3">
-            {upcomingEvents.map((e) => (
-              <EventCard event={e} />
-            ))}
-          </div>
+          upcomingEvents.length === 1 ? (
+            <div class="featured-wrap">
+              <EventCard event={upcomingEvents[0]} featured />
+            </div>
+          ) : (
+            <div class="grid grid-3">
+              {upcomingEvents.map((e) => (
+                <EventCard event={e} />
+              ))}
+            </div>
+          )
         ) : (
           <div class="card empty">
             <span class="icon-tile">
@@ -71,6 +77,9 @@ import { site } from '../data/site';
 </Base>
 
 <style>
+  .featured-wrap {
+    max-width: 960px;
+  }
   .empty {
     grid-template-columns: auto 1fr auto;
     align-items: center;
