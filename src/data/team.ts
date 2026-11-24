@@ -9,6 +9,7 @@ export type Person = {
   role: string;
   group: 'founder' | 'eksekutif';
   photo: string;
+  instagram?: string; // tanpa @, mis. 'kenzosanda'
   focus: string[];
   bio: string;
 };
@@ -20,6 +21,7 @@ export const team: Person[] = [
     role: 'Founder Tradix Community',
     group: 'founder',
     photo: '/images/team/kenzo.webp',
+    instagram: 'kenzosanda',
     focus: ['Technical Analysis', 'Market Structure', 'Crypto'],
     bio: 'Mendirikan Tradix sebagai tempat belajar trading tanpa hype. Rutin membawakan sesi technical analysis di webinar dan meetup Tradix.',
   },
@@ -29,6 +31,7 @@ export const team: Person[] = [
     role: 'Eksekutif Tradix',
     group: 'eksekutif',
     photo: '/images/team/iqbal-eksekutif.webp',
+    instagram: 'iqbal_tqys',
     focus: ['Market Outlook', 'Crypto & Forex'],
     bio: 'Membawakan Market Outlook mingguan Tradix, membahas kondisi market crypto dan forex untuk minggu berjalan.',
   },
@@ -38,6 +41,7 @@ export const team: Person[] = [
     role: 'Eksekutif Tradix',
     group: 'eksekutif',
     photo: '/images/team/zean-eksekutif.webp',
+    instagram: 'zeeeeerrr_rr',
     focus: ['Market Outlook', 'Crypto & Forex'],
     bio: 'Membawakan Market Outlook mingguan Tradix, membahas kondisi market crypto dan forex untuk minggu berjalan.',
   },
@@ -47,6 +51,7 @@ export const team: Person[] = [
     role: 'Eksekutif Tradix',
     group: 'eksekutif',
     photo: '/images/team/koh-eksekutif.webp',
+    instagram: '888qzr',
     focus: ['Technical Analysis', 'Bedah chart', 'Market Outlook'],
     bio: 'Membedah chart dan setup bersama member, mengisi sesi teknikal di seminar offline, dan ikut membawakan Market Outlook mingguan.',
   },

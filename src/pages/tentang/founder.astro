@@ -29,6 +29,13 @@ const sessions = events.filter((e) => e.speakers.some((s) => s.name === founder.
           <a class="btn btn--primary" href={site.whatsapp} target="_blank" rel="noopener">
             <Icon name="whatsapp" /> Belajar bareng di grup
           </a>
+          {
+            founder.instagram && (
+              <a class="btn btn--ghost" href={`https://www.instagram.com/${founder.instagram}/`} target="_blank" rel="noopener">
+                <Icon name="instagram" /> @{founder.instagram}
+              </a>
+            )
+          }
           <a class="btn btn--ghost" href="#sesi">Lihat sesi {founder.name}</a>
         </div>
       </div>

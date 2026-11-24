@@ -4,21 +4,35 @@ interface Props {
   person: Person;
   href?: string;
 }
+import Icon from './Icon.astro';
 const { person, href } = Astro.props;
-const Tag = href ? 'a' : 'article';
 ---
 
-<Tag class="person card" href={href}>
+<article class:list={['person card', { linked: href }]}>
   <div class="frame portrait">
     <img src={person.photo} alt={`Foto ${person.name}`} width="480" height="600" loading="lazy" />
   </div>
   <div class="meta">
-    <h3>{person.name}</h3>
+    <h3>{href ? <a class="name-link" href={href}>{person.name}</a> : person.name}</h3>
     <p class="role">{person.role}</p>
   </div>
   <p>{person.bio}</p>
   <div class="chips">{person.focus.map((f) => <span class="chip">{f}</span>)}</div>
-</Tag>
+  {
+    person.instagram && (
+      <a
+        class="ig"
+        href={`https://www.instagram.com/${person.instagram}/`}
+        target="_blank"
+        rel="noopener"
+        aria-label={`Instagram ${person.name}: @${person.instagram}`}
+      >
+        <Icon name="instagram" />
+        <span>@{person.instagram}</span>
+      </a>
+    )
+  }
+</article>
 
 <style>
   .person {
@@ -33,8 +47,61 @@ const Tag = href ? 'a' : 'article';
   }
   .meta,
   .person > p,
-  .chips {
-    padding-inline: 8px;
+  .chips,
+  .ig {
+    margin-inline: 8px;
+  }
+  /* kartu yang punya halaman profil: seluruh kartu bisa diklik lewat nama */
+  .linked {
+    transition:
+      transform 0.2s var(--ease),
+      border-color 0.2s var(--ease);
+  }
+  .linked:hover {
+    transform: translateY(-2px);
+    border-color: var(--line-2);
+  }
+  .name-link {
+    text-decoration: none;
+  }
+  .name-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+  .name-link:hover {
+    color: var(--accent-2);
+  }
+  .ig {
+    position: relative;
+    z-index: 1;
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 8px 14px;
+    border-radius: var(--r-pill);
+    border: 1px solid var(--line-2);
+    color: var(--ink-2);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      color 0.15s,
+      border-color 0.15s,
+      transform 0.15s var(--ease);
+  }
+  .ig:hover {
+    color: var(--ink);
+    border-color: #e1306c;
+    transform: translateY(-1px);
+  }
+  .ig :global(svg) {
+    width: 18px;
+    height: 18px;
+    color: #e1306c;
   }
   .meta {
     display: grid;
@@ -47,13 +114,14 @@ const Tag = href ? 'a' : 'article';
       align-items: start;
     }
     .portrait {
-      grid-row: 1 / 4;
+      grid-row: 1 / span 4;
       aspect-ratio: 4 / 5;
     }
     .meta,
     .person > p,
-    .chips {
-      padding-inline: 0;
+    .chips,
+    .ig {
+      margin-inline: 0;
     }
     .chips {
       display: none;
